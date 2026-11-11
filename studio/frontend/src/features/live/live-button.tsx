@@ -15,7 +15,6 @@ export const LiveButton: FC<{ disabled?: boolean }> = ({ disabled }) => {
   const t = useT();
   const active = useLiveStore((state) => state.active);
   const enabled = useLiveStore((state) => state.enabled);
-  const state = useLiveStore((state) => state.state);
   const chatActive = useChatActive();
 
   useEffect(() => {
@@ -26,7 +25,6 @@ export const LiveButton: FC<{ disabled?: boolean }> = ({ disabled }) => {
     return null;
   }
 
-  const busy = active && state === "connecting";
   const label = active ? t("live.stop") : t("live.start");
 
   return (
@@ -40,7 +38,7 @@ export const LiveButton: FC<{ disabled?: boolean }> = ({ disabled }) => {
         "size-9 rounded-full text-foreground",
         active && "bg-primary/10 text-primary hover:bg-primary/15",
       )}
-      disabled={disabled || busy}
+      disabled={disabled}
       onClick={() => {
         if (active) {
           liveController.stop();
