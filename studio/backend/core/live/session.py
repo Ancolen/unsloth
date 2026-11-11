@@ -150,6 +150,7 @@ class LiveSession:
         self._barge_in_sent = False
         self._tts_generation = 0
         self._ready_sent = False
+        self._last_smart_turn_silence_ms: Optional[float] = None
 
     # ------------------------------------------------------------------
     # Lifecycle
@@ -346,6 +347,7 @@ class LiveSession:
             self._silence_ms = 0.0
             self._utterance = bytearray(b"".join(self._pre_roll))
             self._pre_roll.clear()
+            self._last_smart_turn_silence_ms = None
             self._last_speech_start_ms = int(now * 1000)
             await self._set_state("speech")
             await self._send(event("speech_started", atMs = self._last_speech_start_ms))
@@ -367,9 +369,20 @@ class LiveSession:
         # endpoint.  With the scorer installed, the fast path is available.
         semantic_complete = False
         if self._silence_ms >= self.config.endpoint.fast_silence_ms:
-            score = self._smart_turn.score(bytes(self._utterance))
-            if score is not None:
-                semantic_complete = score >= self._smart_turn.threshold
+            # A Smart Turn inference every 32 ms would burn a CPU core while the
+            # user pauses.  Score at most every 120 ms of silence, on the speech
+            # segment without the trailing silence.
+            last_scored = self._last_smart_turn_silence_ms
+            if last_scored is None or self._silence_ms - last_scored >= 120.0:
+                self._last_smart_turn_silence_ms = self._silence_ms
+                segment = audio.trim_trailing_silence(
+                    bytes(self._utterance),
+                    self._silence_ms,
+                    self.config.sample_rate,
+                )
+                score = self._smart_turn.score(segment)
+                if score is not None:
+                    semantic_complete = score >= self._smart_turn.threshold
         endpoint = self._endpoint.decide(
             silence_ms = self._silence_ms,
             utterance_ms = self._speech_ms,
@@ -389,6 +402,7 @@ class LiveSession:
         self._utterance.clear()
         self._vad.reset()
         self._barge_in_sent = False
+        self._last_smart_turn_silence_ms = None
         await self._send(event("speech_ended", atMs = int(time.monotonic() * 1000)))
         await self._send(event("endpoint", reason = endpoint.reason))
         if not utterance:
@@ -430,6 +444,7 @@ class LiveSession:
         self._utterance.clear()
         self._pre_roll.clear()
         self._barge_in_sent = False
+        self._last_smart_turn_silence_ms = None
         try:
             self._vad.reset()
         except Exception:  # noqa: BLE001 - a reset must not break a mode change

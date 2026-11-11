@@ -11,7 +11,7 @@ from types import SimpleNamespace
 from typing import Any
 
 from core.live import audio
-from core.live.endpoint import EndpointConfig, EndpointDetector
+from core.live.endpoint import EndpointConfig, EndpointDetector, SmartTurnScorer
 from core.live.models import status as live_status
 from core.live.protocol import (
     PROTOCOL_VERSION,
@@ -114,6 +114,91 @@ def test_endpoint_policy() -> None:
     assert extended.endpoint is False
     forced = detector.decide(silence_ms = 0, utterance_ms = 5000)
     assert forced.endpoint is True and forced.reason == "max"
+
+
+def test_smart_turn_scores_whisper_features_from_the_utterance_end() -> None:
+    import numpy as np
+
+    class _Session:
+        def __init__(self) -> None:
+            self.feeds: list[dict[str, Any]] = []
+
+        def get_inputs(self):
+            return [SimpleNamespace(name = "input_features")]
+
+        def run(self, _outputs, feeds):
+            self.feeds.append(feeds)
+            return [np.array([[0.91]], dtype = np.float32)]
+
+    class _Extractor:
+        def __init__(self) -> None:
+            self.lengths: list[int] = []
+            self.kwargs: dict[str, Any] = {}
+
+        def __call__(self, values, **kwargs):
+            self.lengths.append(len(values))
+            self.kwargs = kwargs
+            return {"input_features": np.zeros((1, 128, 3000), dtype = np.float32)}
+
+    session = _Session()
+    extractor = _Extractor()
+    scorer = SmartTurnScorer(session = session, feature_extractor = extractor)
+    pcm = audio.speech_like_pcm(10_000)
+    score = scorer.score(pcm)
+    assert score is not None and abs(score - 0.91) < 1e-6
+    assert extractor.lengths == [8 * 16000]
+    assert extractor.kwargs["sampling_rate"] == 16000
+    assert "input_features" in session.feeds[0]
+    assert session.feeds[0]["input_features"].shape == (1, 128, 3000)
+    assert scorer.available is True
+
+
+def test_session_throttles_smart_turn_scoring() -> None:
+    class _Scorer:
+        threshold = 0.80
+
+        def __init__(self) -> None:
+            self.calls = 0
+
+        def score(self, _pcm: bytes) -> float:
+            self.calls += 1
+            return 0.0
+
+    async def scenario() -> int:
+        events: list[dict[str, Any]] = []
+
+        async def send_json(payload: dict[str, Any]) -> None:
+            events.append(payload)
+
+        async def send_bytes(_payload: bytes) -> None:
+            return None
+
+        scorer = _Scorer()
+        session = LiveSession(
+            send_json = send_json,
+            send_bytes = send_bytes,
+            stt = FakeStt("tamam"),
+            tts = ToneTts(),
+            smart_turn = scorer,
+        )
+        await session.start()
+        await session.handle_text(json.dumps({"type": "hello", "protocol": 1}))
+        await session.handle_text(json.dumps({"type": "start"}))
+        for _ in range(25):
+            session.push_audio(_frame_for(32, True))
+        for _ in range(40):
+            session.push_audio(_frame_for(32, False))
+        for _ in range(60):
+            await asyncio.sleep(0.01)
+            if any(event.get("type") == "endpoint" for event in events):
+                break
+        await session.close()
+        return scorer.calls
+
+    calls = asyncio.run(scenario())
+    # 900 ms of extended silence, scored every 120 ms, is ~6 calls; the previous
+    # per-frame version made ~19.
+    assert 1 <= calls <= 7
 
 
 def test_full_turn_transcribes_and_speaks() -> None:

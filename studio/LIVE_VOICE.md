@@ -263,6 +263,9 @@ PCM 16 kHz frames
 - Pre-roll: 300 ms before speech onset so word starts are not clipped.
 - Endpoint: Smart Turn probability >= 0.80 plus 300 ms silence is the fast path;
   otherwise wait up to 900 ms. A max utterance guard (default 30 s) forces a cut.
+  Smart Turn is a Whisper-Tiny classifier: it receives 8 s log-mel
+  `input_features` from `WhisperFeatureExtractor`, not raw PCM, and is scored at
+  most every 120 ms of silence on the trailing-silence-trimmed segment.
 - VAD fallback: if the ONNX model cannot load, use an energy VAD and surface a
   visible warning; never fail silently.
 - Barge-in: when `mode=barge_in` and playback is active, VAD continues. Sustained
@@ -524,7 +527,7 @@ Dependencies and packaging:
 | TTS quality | XTTS-v2 | coqui/transformers adapter (implemented, opt-in) | ~1.8 GB GPU | CPML non-commercial; acceptance gate |
 | TTS alternative | Studio audio.cpp models | audio.cpp | varies | test Turkish quality |
 | VAD | Silero VAD v6.2.3 | onnxruntime | ~2 MB CPU | MIT |
-| Endpoint | Smart Turn v3.2 | onnxruntime | small CPU | license metadata |
+| Endpoint | Smart Turn v3.2 | onnxruntime + transformers feature extractor | small CPU | license metadata |
 | Vision bridge (optional) | Qwen3-VL 4B | llama.cpp | extra | only for text-only chat + screen |
 
 Environment overrides (all optional):
