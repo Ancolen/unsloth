@@ -13,6 +13,9 @@ interface LiveSettings {
   voice: string;
   attachScreen: boolean;
   interruptWhileThinking: boolean;
+  endpointFastMs: number;
+  endpointExtendedMs: number;
+  maxUtteranceMs: number;
 }
 
 interface LiveRuntime {
@@ -56,6 +59,9 @@ export interface LiveStore extends LiveRuntime, LiveSettings {
   setVoice: (voice: string) => void;
   setAttachScreen: (attach: boolean) => void;
   setInterruptWhileThinking: (interrupt: boolean) => void;
+  setEndpointFastMs: (ms: number) => void;
+  setEndpointExtendedMs: (ms: number) => void;
+  setMaxUtteranceMs: (ms: number) => void;
   resetRuntime: () => void;
 }
 
@@ -85,6 +91,9 @@ const initialSettings: LiveSettings = {
   voice: "",
   attachScreen: false,
   interruptWhileThinking: false,
+  endpointFastMs: 300,
+  endpointExtendedMs: 900,
+  maxUtteranceMs: 30000,
 };
 
 export const useLiveStore = create<LiveStore>()(
@@ -119,6 +128,10 @@ export const useLiveStore = create<LiveStore>()(
       setAttachScreen: (attachScreen) => set({ attachScreen }),
       setInterruptWhileThinking: (interruptWhileThinking) =>
         set({ interruptWhileThinking }),
+      setEndpointFastMs: (endpointFastMs) => set({ endpointFastMs }),
+      setEndpointExtendedMs: (endpointExtendedMs) =>
+        set({ endpointExtendedMs }),
+      setMaxUtteranceMs: (maxUtteranceMs) => set({ maxUtteranceMs }),
       resetRuntime: () =>
         set((state) => ({
           ...initialRuntime,
@@ -137,6 +150,9 @@ export const useLiveStore = create<LiveStore>()(
         voice: state.voice,
         attachScreen: state.attachScreen,
         interruptWhileThinking: state.interruptWhileThinking,
+        endpointFastMs: state.endpointFastMs,
+        endpointExtendedMs: state.endpointExtendedMs,
+        maxUtteranceMs: state.maxUtteranceMs,
       }),
     },
   ),

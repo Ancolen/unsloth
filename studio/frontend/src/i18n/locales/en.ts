@@ -5780,6 +5780,11 @@ export const en = {
       enabled: "Enabled on this server",
       disabled: "Disabled on this server",
       language: "Conversation language",
+      advancedEndpointing: "Advanced endpointing",
+      endpointFastMs: "Fast endpoint (ms)",
+      endpointExtendedMs: "Extended endpoint (ms)",
+      maxUtteranceMs: "Maximum utterance (ms)",
+      endpointHint: "Applies to the next Live session.",
       attachScreen: "Attach a screen frame every turn",
       interruptWhileThinking: "Interrupt while the assistant is thinking",
       screenDesktopOnly:

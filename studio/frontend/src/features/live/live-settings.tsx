@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { type FC, useEffect } from "react";
 import { LiveAssetSettings } from "./live-asset-settings";
 import { liveController } from "./live-controller";
+import { LiveEndpointSettings } from "./live-endpoint-settings";
 import { liveScreenSupported } from "./live-screen";
 import { useLiveStore } from "./live-store";
 
@@ -96,6 +97,7 @@ export const LiveSettings: FC = () => {
       </div>
 
       <LiveAssetSettings />
+      <LiveEndpointSettings />
 
       {fakeEngine ? (
         <p className="text-xs text-amber-600 dark:text-amber-400">

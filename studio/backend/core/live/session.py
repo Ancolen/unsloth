@@ -44,6 +44,10 @@ SendJson = Callable[[dict[str, Any]], Awaitable[None]]
 SendBytes = Callable[[bytes], Awaitable[None]]
 
 
+def _clamp(value: float, low: float, high: float) -> float:
+    return max(low, min(high, value))
+
+
 def _smart_turn_path() -> Optional[Path]:
     asset = asset_by_role("endpoint")
     return available_asset_path(asset) if asset is not None else None
@@ -65,23 +69,38 @@ class LiveConfig:
         language = (message.language or self.language or "tr").strip() or "tr"
         mode = message.mode if message.mode in VALID_MODES else self.mode
         endpoint = self.endpoint
-        if message.endpointFastMs is not None or message.endpointExtendedMs is not None:
+        if (
+            message.endpointFastMs is not None
+            or message.endpointExtendedMs is not None
+            or message.maxUtteranceMs is not None
+        ):
+            fast = _clamp(
+                float(message.endpointFastMs)
+                if message.endpointFastMs is not None
+                else endpoint.fast_silence_ms,
+                100.0,
+                2000.0,
+            )
+            extended = _clamp(
+                float(message.endpointExtendedMs)
+                if message.endpointExtendedMs is not None
+                else endpoint.extended_silence_ms,
+                200.0,
+                5000.0,
+            )
+            # The fast path is meaningless if the extended window is shorter.
+            if extended < fast + 100.0:
+                extended = min(5000.0, fast + 100.0)
             endpoint = replace(
                 endpoint,
-                fast_silence_ms = (
-                    float(message.endpointFastMs)
-                    if message.endpointFastMs is not None
-                    else endpoint.fast_silence_ms
-                ),
-                extended_silence_ms = (
-                    float(message.endpointExtendedMs)
-                    if message.endpointExtendedMs is not None
-                    else endpoint.extended_silence_ms
-                ),
-                max_utterance_ms = (
+                fast_silence_ms = fast,
+                extended_silence_ms = extended,
+                max_utterance_ms = _clamp(
                     float(message.maxUtteranceMs)
                     if message.maxUtteranceMs is not None
-                    else endpoint.max_utterance_ms
+                    else endpoint.max_utterance_ms,
+                    1000.0,
+                    120000.0,
                 ),
             )
         return replace(

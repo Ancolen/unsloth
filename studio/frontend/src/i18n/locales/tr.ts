@@ -6134,6 +6134,11 @@ export const tr = {
       enabled: "Bu sunucuda etkin",
       disabled: "Bu sunucuda kapalı",
       language: "Konuşma dili",
+      advancedEndpointing: "Gelişmiş tur bitişi",
+      endpointFastMs: "Hızlı bitiş (ms)",
+      endpointExtendedMs: "Uzatılmış bitiş (ms)",
+      maxUtteranceMs: "En uzun söz (ms)",
+      endpointHint: "Bir sonraki Canlı oturumunda geçerli olur.",
       attachScreen: "Her turda ekran karesi ekle",
       interruptWhileThinking: "Asistan düşünürken araya gir",
       screenDesktopOnly:

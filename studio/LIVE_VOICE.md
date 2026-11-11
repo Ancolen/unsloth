@@ -219,7 +219,7 @@ Client -> server:
 
 | Message | Body |
 |---|---|
-| `hello` | `{protocol, sampleRate: 16000, channels: 1, language, mode, sttModel, ttsModel, voice}` |
+| `hello` | `{protocol, sampleRate: 16000, channels: 1, language, mode, sttModel, ttsModel, voice, endpointFastMs, endpointExtendedMs, maxUtteranceMs}` |
 | `start` / `stop` | session control |
 | `mute` | `{muted}` |
 | `mode` | `{mode: "turn" \| "barge_in"}` |
@@ -270,6 +270,9 @@ PCM 16 kHz frames
   Smart Turn is a Whisper-Tiny classifier: it receives 8 s log-mel
   `input_features` from `WhisperFeatureExtractor`, not raw PCM, and is scored at
   most every 120 ms of silence on the trailing-silence-trimmed segment.
+  Settings -> Voice has an advanced disclosure for the three thresholds; the
+  backend clamps them (fast 100-2000 ms, extended 200-5000 ms and at least
+  fast+100 ms, max utterance 1-120 s) so a bad value cannot wedge a session.
 - VAD fallback: if the ONNX model cannot load, use an energy VAD and surface a
   visible warning; never fail silently.
 - Barge-in: when `mode=barge_in` and playback is active, VAD continues. Sustained

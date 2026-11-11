@@ -22,7 +22,7 @@ from core.live.protocol import (
     parse_client_message,
     validate_hello,
 )
-from core.live.session import LiveSession
+from core.live.session import LiveConfig, LiveSession
 from core.live.stt import FakeStt
 from core.live.tts import PiperTts, TtsError, ToneTts
 from core.live.vad import EnergyVad
@@ -158,6 +158,38 @@ def test_energy_vad_opens_and_releases() -> None:
     assert decisions[-1].is_speech is True
     released = [vad.process(silence) for _ in range(10)]
     assert released[-1].is_speech is False
+
+
+def test_hello_clamps_endpoint_thresholds() -> None:
+    message = parse_client_message(
+        json.dumps(
+            {
+                "type": "hello",
+                "protocol": PROTOCOL_VERSION,
+                "endpointFastMs": 10,
+                "endpointExtendedMs": 20,
+                "maxUtteranceMs": 1_000_000,
+            }
+        )
+    )
+    assert message is not None
+    config = LiveConfig().with_hello(message)
+    assert config.endpoint.fast_silence_ms == 100
+    assert config.endpoint.extended_silence_ms == 200
+    assert config.endpoint.max_utterance_ms == 120_000
+
+    only_max = parse_client_message(
+        json.dumps(
+            {
+                "type": "hello",
+                "protocol": PROTOCOL_VERSION,
+                "maxUtteranceMs": 500,
+            }
+        )
+    )
+    assert only_max is not None
+    config = LiveConfig().with_hello(only_max)
+    assert config.endpoint.max_utterance_ms == 1000
 
 
 def test_endpoint_policy() -> None:

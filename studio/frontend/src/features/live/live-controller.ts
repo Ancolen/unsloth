@@ -228,6 +228,9 @@ class LiveController {
             ttsModel: settings.ttsModel || undefined,
             voice,
             echoCancellation: captureInfo.echoCancellation,
+            endpointFastMs: settings.endpointFastMs,
+            endpointExtendedMs: settings.endpointExtendedMs,
+            maxUtteranceMs: settings.maxUtteranceMs,
           });
           this.socket.sendJson({ type: "start" });
           this.capture.setEnabled(true);
