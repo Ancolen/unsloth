@@ -151,18 +151,17 @@ def available_asset_path(asset: LiveAsset) -> Optional[Path]:
     return asset_path(asset) if asset_installed(asset) else None
 
 
-_onnxruntime: Optional[bool] = None
-
-
 def onnxruntime_available() -> bool:
-    """An installed ONNX asset is inert without the runtime; report it honestly."""
-    global _onnxruntime
-    if _onnxruntime is None:
-        try:
-            _onnxruntime = importlib.util.find_spec("onnxruntime") is not None
-        except (ImportError, ValueError):
-            _onnxruntime = False
-    return _onnxruntime
+    """An installed ONNX asset is inert without the runtime; report it honestly.
+
+    `find_spec` is cheap and deliberately not cached: a user who installs
+    onnxruntime while Studio is running should see the detectors activate on the
+    next status refresh.
+    """
+    try:
+        return importlib.util.find_spec("onnxruntime") is not None
+    except (ImportError, ValueError):
+        return False
 
 
 def asset_active(asset: LiveAsset) -> bool:
