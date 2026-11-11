@@ -32,7 +32,8 @@ def screen_capture_supported() -> bool:
 
 
 def _engine_kind(env_name: str) -> str:
-    return "fake" if os.environ.get(env_name, "").strip().lower() == "fake" else "studio"
+    value = os.environ.get(env_name, "").strip().lower()
+    return value or "studio"
 
 
 @dataclass(frozen = True)

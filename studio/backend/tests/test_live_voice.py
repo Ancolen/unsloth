@@ -18,7 +18,7 @@ from core.live.protocol import (
 )
 from core.live.session import LiveSession
 from core.live.stt import FakeStt
-from core.live.tts import ToneTts
+from core.live.tts import PiperTts, TtsError, ToneTts
 from core.live.vad import EnergyVad
 
 
@@ -187,3 +187,38 @@ def test_barge_in_while_playback_is_active() -> None:
 
     events = asyncio.run(scenario())
     assert any(event.get("type") == "barge_in" for event in events)
+
+
+class _FakePiperVoice:
+    class config:
+        sample_rate = 22050
+
+    def synthesize_stream_raw(self, text: str):
+        yield b"\x00\x01" * 256
+
+
+def test_piper_tts_wraps_streamed_pcm() -> None:
+    async def scenario() -> tuple[bytes, int]:
+        engine = PiperTts("unused.onnx", voice_instance = _FakePiperVoice())
+        try:
+            return await engine.synthesize("merhaba")
+        finally:
+            await engine.close()
+
+    wav_bytes, sample_rate = asyncio.run(scenario())
+    assert sample_rate == 22050
+    assert wav_bytes.startswith(b"RIFF")
+    assert audio.wav_sample_rate(wav_bytes) == 22050
+
+
+def test_piper_tts_reports_a_missing_voice() -> None:
+    async def scenario() -> None:
+        engine = PiperTts("/definitely/missing/voice.onnx")
+        await engine.synthesize("merhaba")
+
+    try:
+        asyncio.run(scenario())
+    except TtsError as exc:
+        assert "Piper voice not found" in str(exc)
+    else:
+        raise AssertionError("expected TtsError for a missing Piper voice")

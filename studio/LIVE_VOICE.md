@@ -503,12 +503,35 @@ Dependencies and packaging:
 | Chat alternative | any installed vision-capable GGUF | llama.cpp | varies | - |
 | STT | Whisper large-v3-turbo | whisper.cpp | ~1.1 GB GPU / CPU | MIT |
 | STT alternative | Qwen3-ASR 0.6B | audio.cpp | small | model card |
-| TTS default | Piper `tr_TR-fettah-medium` | Piper ONNX adapter | CPU, ~0 GB | Piper MIT; voice license check |
+| TTS default | Piper `tr_TR-fettah-medium` | Piper ONNX adapter (implemented, opt-in) | CPU, ~0 GB | Piper MIT; voice license check |
 | TTS quality | XTTS-v2 | coqui/transformers adapter | ~1.8 GB GPU | CPML non-commercial; acceptance gate |
 | TTS alternative | Studio audio.cpp models | audio.cpp | varies | test Turkish quality |
 | VAD | Silero VAD v6.2.3 | onnxruntime | ~2 MB CPU | MIT |
 | Endpoint | Smart Turn v3.2 | onnxruntime | small CPU | license metadata |
 | Vision bridge (optional) | Qwen3-VL 4B | llama.cpp | extra | only for text-only chat + screen |
+
+Environment overrides (all optional):
+
+| Variable | Effect |
+|---|---|
+| `UNSLOTH_STUDIO_LIVE_VOICE=0` | Disable the route and the composer button |
+| `UNSLOTH_LIVE_STT=fake` | Use the deterministic `FakeStt` (development only) |
+| `UNSLOTH_LIVE_TTS=fake` | Use the test tone instead of a voice |
+| `UNSLOTH_LIVE_TTS=piper` | Use the local Piper ONNX adapter |
+| `UNSLOTH_LIVE_PIPER_MODEL` | Path to a Piper `.onnx` voice (required for `piper`) |
+| `UNSLOTH_LIVE_PIPER_CONFIG` | Optional path to the voice's `.onnx.json`; defaults beside the model |
+| `UNSLOTH_LIVE_PIPER_SPEAKER` | Optional speaker name/id for a multi-speaker voice |
+| `UNSLOTH_LIVE_PIPER_CUDA=1` | Load the Piper voice with CUDA instead of CPU |
+| `UNSLOTH_LIVE_VAD_MODEL` | Silero VAD ONNX path; falls back to the energy VAD |
+| `UNSLOTH_LIVE_SMART_TURN_MODEL` | Smart Turn ONNX path; falls back to 900 ms extended endpointing |
+
+The Piper path is installed on demand, not bundled: install `piper-tts` in
+Studio's managed Python environment, then point `UNSLOTH_LIVE_PIPER_MODEL` at a
+voice pair such as `tr_TR-fettah-medium.onnx` (+ `.onnx.json`) from
+`rhasspy/piper-voices` (`tr/tr_TR/fettah/medium/`).  The adapter returns an
+actionable error when the package, voice or config is missing.  Silero VAD and
+Smart Turn remain optional `onnxruntime` assets; the energy VAD needs no extra
+dependency and is the default until those assets are present.
 
 Download flow:
 
