@@ -301,7 +301,8 @@ messages. The backend:
 When a sentence is synthesized through Studio's `/v1/audio/speech`, `AsgiTts`
 sends `X-Unsloth-Live-Voice: 1`; the route skips the audio-gallery save and the
 per-request API monitor row for that request, so a long conversation cannot
-evict the user's saved clips or flood the activity list.
+evict the user's saved clips or flood the activity list. `AsgiStt` sends the
+same header to `/v1/audio/transcriptions`, which skips its monitor row as well.
 
 Engines:
 

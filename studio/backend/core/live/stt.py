@@ -116,7 +116,11 @@ class AsgiStt:
         if language and language.strip():
             data["language"] = language.strip()
         files = {"file": ("utterance.wav", wav_bytes, "audio/wav")}
-        headers = {"Authorization": f"Bearer {self._token}"}
+        headers = {
+            "Authorization": f"Bearer {self._token}",
+            # Live utterances are internal; keep them out of the API activity list.
+            "X-Unsloth-Live-Voice": "1",
+        }
         try:
             response = await self._client.post(
                 "/v1/audio/transcriptions",

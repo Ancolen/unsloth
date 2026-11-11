@@ -8087,6 +8087,14 @@ def _monitor_active_model() -> Optional[str]:
 
 
 @asynccontextmanager
+def _is_live_voice_request(request: Request) -> bool:
+    """Live Voice sentence/utterance calls are internal, not user API activity."""
+    return (request.headers.get("x-unsloth-live-voice") or "").strip().lower() in (
+        "1",
+        "true",
+    )
+
+
 async def _monitored_media_request(
     request: Request, *, model: Optional[str], prompt: str, subject: Optional[str]
 ):
@@ -24992,12 +25000,8 @@ async def openai_audio_speech(
     Live Voice sends ``X-Unsloth-Live-Voice: 1`` so its sentence clips are not added to
     the user's audio gallery."""
     fmt = (body.response_format or "wav").strip().lower()
-    live_voice = (request.headers.get("x-unsloth-live-voice") or "").strip().lower() in (
-        "1",
-        "true",
-    )
+    live_voice = _is_live_voice_request(request)
     if live_voice:
-        # Per-sentence clips are internal to the live socket, not user API activity.
         request.state.skip_api_monitor = True
     # Neither path streams, a saved connection included.
     if body.stream_format == "sse":
@@ -25253,6 +25257,9 @@ async def openai_audio_transcriptions(
     and ``diarized_json``. Optional ``device`` (``auto``/``cpu``/``gpu``) places a cold
     load; when omitted, Voice Settings "Load into" / ``UNSLOTH_AUDIO_DEVICE`` apply (#15280)."""
     fmt = (response_format or "json").strip().lower()
+    if _is_live_voice_request(request):
+        # One live utterance per turn should not create an API activity row.
+        request.state.skip_api_monitor = True
     if fmt not in ("json", "text", "verbose_json", "diarized_json"):
         raise HTTPException(
             status_code = 400,
