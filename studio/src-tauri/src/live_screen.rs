@@ -39,8 +39,9 @@ pub struct LiveScreenStatus {
 mod imp {
     use std::collections::VecDeque;
     use std::fs;
+    use std::io::Write;
     use std::os::fd::{AsRawFd, OwnedFd};
-    use std::os::unix::fs::PermissionsExt;
+    use std::os::unix::fs::OpenOptionsExt;
     use std::path::PathBuf;
     use std::sync::mpsc::{self, Receiver, RecvTimeoutError, Sender};
     use std::sync::{LazyLock, Mutex};
@@ -162,9 +163,16 @@ mod imp {
         if let Some(parent) = path.parent() {
             let _ = fs::create_dir_all(parent);
         }
-        if fs::write(&path, token).is_ok() {
-            let _ = fs::set_permissions(&path, fs::Permissions::from_mode(0o600));
-        }
+        let Ok(mut file) = fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(&path)
+        else {
+            return;
+        };
+        let _ = file.write_all(token.as_bytes());
     }
 
     /// Read the dimensions out of a JPEG start-of-frame segment.  `jpegenc`
