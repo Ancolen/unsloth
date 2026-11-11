@@ -375,6 +375,49 @@ def test_full_turn_transcribes_and_speaks() -> None:
     assert tts_metrics and tts_metrics[0]["ttsMs"] >= 0
 
 
+def test_stop_discards_a_transcription_in_flight() -> None:
+    class _SlowStt:
+        async def transcribe(self, *_args, **_kwargs) -> str:
+            await asyncio.sleep(0.15)
+            return "geç kalan metin"
+
+        async def close(self) -> None:
+            return None
+
+    async def scenario() -> list[dict[str, Any]]:
+        events: list[dict[str, Any]] = []
+
+        async def send_json(payload: dict[str, Any]) -> None:
+            events.append(payload)
+
+        async def send_bytes(_payload: bytes) -> None:
+            return None
+
+        session = LiveSession(
+            send_json = send_json,
+            send_bytes = send_bytes,
+            stt = _SlowStt(),
+            tts = ToneTts(),
+        )
+        await session.start()
+        await session.handle_text(json.dumps({"type": "hello", "protocol": 1}))
+        await session.handle_text(json.dumps({"type": "start"}))
+        for _ in range(25):
+            session.push_audio(_frame_for(32, True))
+        for _ in range(40):
+            session.push_audio(_frame_for(32, False))
+        for _ in range(60):
+            await asyncio.sleep(0.01)
+            if any(event.get("type") == "endpoint" for event in events):
+                break
+        await session.handle_text(json.dumps({"type": "stop"}))
+        await asyncio.sleep(0.25)
+        await session.close()
+        return [event for event in events if event.get("type") == "transcript"]
+
+    assert asyncio.run(scenario()) == []
+
+
 def test_barge_in_while_playback_is_active() -> None:
     async def scenario() -> list[dict[str, Any]]:
         events: list[dict[str, Any]] = []

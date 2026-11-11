@@ -153,9 +153,9 @@ class LiveSession:
         smart_turn_path = _smart_turn_path()
         self._smart_turn = smart_turn or SmartTurnScorer(model_path = smart_turn_path)
         self._audio_queue: asyncio.Queue[bytes] = asyncio.Queue(maxsize = 96)
-        self._stt_queue: asyncio.Queue[tuple[str, bytes, float, float, str]] = (
-            asyncio.Queue(maxsize = 8)
-        )
+        self._stt_queue: asyncio.Queue[
+            tuple[str, bytes, float, float, str, int]
+        ] = asyncio.Queue(maxsize = 8)
         self._tts_queue: asyncio.Queue[SpeakItem] = asyncio.Queue()
         self._tasks: list[asyncio.Task[Any]] = []
         self._closed = False
@@ -172,6 +172,7 @@ class LiveSession:
         self._last_speech_start_ms = 0
         self._utterance_started_at = 0.0
         self._utterance_counter = 0
+        self._start_generation = 0
         self._playback_active = False
         self._barge_in_sent = False
         self._tts_generation = 0
@@ -246,10 +247,12 @@ class LiveSession:
             await self._handle_hello(message)
         elif kind == "start":
             self._started = True
+            self._start_generation += 1
             self._reset_audio_state()
             await self._set_state("listening")
         elif kind == "stop":
             self._started = False
+            self._start_generation += 1
             self._reset_audio_state()
             self._cancel_tts()
             await self._set_state("idle")
@@ -444,6 +447,7 @@ class LiveSession:
             self._utterance_started_at,
             time.monotonic(),
             endpoint.reason,
+            self._start_generation,
         )
         try:
             self._stt_queue.put_nowait(item)
@@ -499,9 +503,13 @@ class LiveSession:
                     started_at,
                     endpoint_at,
                     endpoint_reason,
+                    generation,
                 ) = await self._stt_queue.get()
             except asyncio.CancelledError:
                 return
+            if generation != self._start_generation:
+                # A stop/restart invalidated this utterance while it waited.
+                continue
             wav = audio.pcm16_wav(pcm, self.config.sample_rate)
             try:
                 text = await self.stt.transcribe(
@@ -512,6 +520,8 @@ class LiveSession:
             except asyncio.CancelledError:
                 return
             except Exception as exc:  # noqa: BLE001 - surface the engine's reason
+                if generation != self._start_generation:
+                    continue
                 logger.warning("live.stt_failed", error = str(exc))
                 await self._send(
                     error_event(
@@ -521,6 +531,10 @@ class LiveSession:
                     )
                 )
                 await self._set_state("listening")
+                continue
+            if generation != self._start_generation:
+                # The user stopped while the engine was transcribing; the text
+                # must not arrive as a turn in the next session.
                 continue
             text = (text or "").strip()
             if not text:
