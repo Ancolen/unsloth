@@ -789,15 +789,15 @@ for the live engine, Rust for screen capture.
   - new `studio/src-tauri/src/live_screen.rs`,
   - only small anchor edits in existing files (`main.py`, `thread.tsx`,
     `auto-read-aloud.tsx`, settings, i18n, Tauri `main.rs`).
-- Guard the feature with `UNSLOTH_STUDIO_LIVE_VOICE`; default off in release builds
-  until the feature is stable.
+- Guard the feature with `UNSLOTH_STUDIO_LIVE_VOICE`; it defaults on and an
+  operator can set `0` to hide the route and the composer button.
 - Rebase on `upstream/main` regularly; run Studio's existing typecheck, tests and
   `i18n:check` after each rebase.
 
 ## 14. Open questions
 
-1. Screen capture: Rust `gstreamer-rs` vs `gst-launch-1.0` helper. Rust is the
-   long-term path; the helper is the packaging fallback.
+1. Screen capture: Rust `gstreamer-rs` is implemented; a `gst-launch-1.0`
+   helper remains a possible packaging fallback if a target lacks the crate.
 2. Turkish TTS: Piper first; XTTS quality vs VRAM; test Studio audio.cpp models.
 3. STT: whisper.cpp large-v3-turbo vs Qwen3-ASR 0.6B on Turkish benchmarks.
 4. Partial transcripts: streaming ASR vs rolling re-transcription; not v1.
