@@ -135,7 +135,13 @@ class AsgiStt:
         except httpx.HTTPError as exc:
             raise SttError(f"Could not reach the local STT engine: {exc}") from exc
         if response.status_code >= 400:
-            raise SttError(_error_detail(response))
+            detail = _error_detail(response)
+            if response.status_code == 400 and "no model loaded" in detail.lower():
+                detail = (
+                    "No STT model is loaded. Install and select a transcription "
+                    "model in Settings → Voice."
+                )
+            raise SttError(detail)
         try:
             payload = response.json()
         except ValueError as exc:
