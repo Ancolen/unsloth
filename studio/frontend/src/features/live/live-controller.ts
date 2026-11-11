@@ -371,7 +371,19 @@ class LiveController {
       this.baselineAssistantId = null;
     }
     if (messageId !== this.assistantMessageId) {
+      // A new assistant message replaces the old answer.  Stop any audio still
+      // queued for the old one and tell the backend that playback ended, or
+      // turn mode would keep gating the microphone forever.
+      if (this.currentPlaybackId || this.pendingTtsId) {
+        this.socket.sendJson({ type: "tts_cancel" });
+        this.player.cancel();
+        const id = this.currentPlaybackId ?? this.pendingTtsId;
+        if (id) {
+          this.socket.sendJson({ type: "playback_finished", id });
+        }
+      }
       this.assistantMessageId = messageId;
+      this.pendingTtsId = null;
       this.sentences.reset();
       this.ttsSeq = 0;
       this.currentPlaybackId = null;
