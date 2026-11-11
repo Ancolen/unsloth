@@ -490,7 +490,10 @@ Dependencies and packaging:
 - System: GStreamer base/good (`pipewiresrc`, `videorate`, `videoscale`,
   `videoconvert`, `jpegenc`, `appsink`), PipeWire, xdg-desktop-portal. The
   capture thread checks every element and returns an actionable error when one is
-  missing. Add the checks to `studio/setup.sh` and the Linux installer.
+  missing. The desktop build CI and release workflow install
+  `libgstreamer1.0-dev`, `libgstreamer-plugins-base1.0-dev`,
+  `gstreamer1.0-pipewire` and the good/bad/libav plugin sets; the AppImage
+  packaging must keep them bundled.
 - AppImage must bundle the required GStreamer plugins; this is the main packaging
   risk. Fallback: portal handshake plus a `gst-launch-1.0` helper managed by the
   backend, still inside Studio.
