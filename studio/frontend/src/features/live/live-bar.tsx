@@ -73,7 +73,37 @@ export const LiveBar: FC = () => {
   const screenSupported = liveScreenSupported();
 
   if (!active) {
-    return null;
+    if (!error) {
+      return null;
+    }
+    return (
+      <div
+        className="flex min-w-0 flex-1 items-start gap-2 rounded-2xl border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+        role="alert"
+      >
+        <span className="min-w-0 flex-1" dir="auto">
+          {error}
+        </span>
+        <button
+          type="button"
+          className="shrink-0 rounded-full border border-destructive/40 px-2.5 py-0.5 font-medium hover:bg-destructive/15"
+          onClick={() => {
+            liveController.stop();
+            void liveController.start();
+          }}
+        >
+          {t("live.retry")}
+        </button>
+        <button
+          type="button"
+          className="shrink-0 rounded-full p-0.5 hover:bg-destructive/15"
+          aria-label={t("live.dismissError")}
+          onClick={() => useLiveStore.getState().setError(null)}
+        >
+          <X className="size-3.5" />
+        </button>
+      </div>
+    );
   }
 
   const bars = Array.from({ length: BAR_COUNT }, (_, index) => {

@@ -5759,6 +5759,7 @@ export const en = {
     screenCloudBlocked:
       "The screen frame was not sent to a cloud provider. Enable cloud screen sharing in Settings → Voice.",
     dismissError: "Dismiss error",
+    retry: "Retry",
     states: {
       idle: "Idle",
       connecting: "Connecting",

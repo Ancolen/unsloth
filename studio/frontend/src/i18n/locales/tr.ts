@@ -6113,6 +6113,7 @@ export const tr = {
     screenCloudBlocked:
       "Ekran karesi bulut sağlayıcısına gönderilmedi. Ayarlar → Ses bölümünden bulut ekran paylaşımını açın.",
     dismissError: "Hatayı kapat",
+    retry: "Yeniden dene",
     states: {
       idle: "Boşta",
       connecting: "Bağlanıyor",

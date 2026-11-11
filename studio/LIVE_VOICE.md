@@ -689,9 +689,10 @@ a Download button; a user-selected `UNSLOTH_LIVE_VAD_MODEL` /
   documentation.
 - 30-minute soak, VRAM/CPU, leaks, Studio regression suites.
 - Exit: all metrics met; existing Studio tests green.
-- Implemented: error paths return to idle with actionable text, accessibility
-  labels/announcements, Turkish/English parity, start/stop race guards, screen
-  pause, cloud-screen consent, and per-turn speech/STT/TTS timing events.
+- Implemented: failed sessions leave a persistent error card with Retry/Dismiss,
+  accessibility labels/announcements, Turkish/English parity, start/stop race
+  guards, screen pause, cloud-screen consent, and per-turn speech/STT/TTS
+  timing events.
 - Remaining: reconnect policy, a latency dashboard (the metrics events are
   emitted but only tests consume them), keyboard shortcuts, 30-minute soak and
   packaged-build/HIL verification.
