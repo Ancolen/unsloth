@@ -105,6 +105,12 @@ import { TerminalToolUI } from "@/components/assistant-ui/tool-ui-terminal";
 import { WebSearchToolUI } from "@/components/assistant-ui/tool-ui-web-search";
 import { ChatDictationBar } from "@/components/assistant-ui/chat-dictation-bar";
 import {
+  LiveBar,
+  LiveButton,
+  LiveRuntimeBridge,
+  useLiveStore,
+} from "@/features/live";
+import {
   ChatAudioUploadMount,
   composerSubmitIntent,
   composerFollowUpBehavior,
@@ -2420,6 +2426,7 @@ export const Thread: FC<{
         onDrop={onDrop}
       >
         {!hideComposer && <AutoReadAloud />}
+        {!hideComposer && <LiveRuntimeBridge />}
         <IntentAwareScrollProvider value={autoScrollContext}>
           <div
             ref={composedViewportRef}
@@ -3011,6 +3018,7 @@ const Composer: FC<{
 }> = ({ disabled, threadId, menuSide, disableQueue }) => {
   const aui = useAui();
   const isDictating = useAuiState((s) => s.composer.dictation != null);
+  const isLiveActive = useLiveStore((s) => s.active);
   const pageDragging = useContext(PageDragContext);
   const nativeDragging = useContext(NativeAttachmentDragContext);
   const { overlay, closeOverlay } = useGeneratedImageOverlay();
@@ -5994,7 +6002,9 @@ const Composer: FC<{
             </>
           ) : null}
         </div>
-        {isDictating ? (
+        {isLiveActive ? (
+          <LiveBar />
+        ) : isDictating ? (
           <ChatDictationBar
             onSend={sendAfterDictation}
             // Every state handleSubmit would reject after transcription; text comes from the transcript.
@@ -7646,6 +7656,7 @@ const ComposerRightControls: FC<{
   queueThreadIds,
 }) => {
   const t = useT();
+  const liveActive = useLiveStore((s) => s.active);
   const followUpBehavior = useChatPreferencesStore((s) => s.followUpBehavior);
   const sendShortcut = useChatPreferencesStore((s) => s.sendShortcut);
   const micTarget = useVoiceSettingsStore((s) => s.micTarget);
@@ -7792,12 +7803,13 @@ const ComposerRightControls: FC<{
             type="button"
             variant="ghost"
             className="size-9 rounded-full text-foreground"
-            disabled={dictationDisabled}
+            disabled={dictationDisabled || liveActive}
             onClick={onDictateClick}
           >
             <MicIcon className="unsloth-dictate-icon size-6" />
           </TooltipIconButton>
         )}
+        <LiveButton />
       </ComposerPrimitive.If>
       <AuiIf
         condition={({ thread }) =>

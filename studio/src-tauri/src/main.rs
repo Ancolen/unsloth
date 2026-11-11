@@ -30,6 +30,7 @@ mod install_watchdog;
 mod linux_gpu_supervisor;
 #[cfg(target_os = "linux")]
 mod linux_webkit;
+mod live_screen;
 mod long_paths;
 mod loopback_http;
 #[cfg(target_os = "macos")]
@@ -2602,6 +2603,11 @@ fn main() {
             native_intents::reveal_path_token,
             native_intents::open_path_token,
             webview_permissions::reset_microphone_permission,
+            live_screen::live_screen_status,
+            live_screen::live_screen_start,
+            live_screen::live_screen_stop,
+            live_screen::live_screen_pause,
+            live_screen::live_screen_latest,
             has_saved_window_state,
             was_launched_hidden,
             mark_in_app_relaunch,

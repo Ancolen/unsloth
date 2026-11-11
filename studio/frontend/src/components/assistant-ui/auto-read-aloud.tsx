@@ -2,6 +2,7 @@
 // Copyright 2026-present the Unsloth AI Inc. team. All rights reserved. See /studio/LICENSE.AGPL-3.0
 
 import { decideAutoRead, useChatActive } from "@/features/chat";
+import { useLiveStore } from "@/features/live/live-store";
 import { useVoiceSettingsStore } from "@/features/settings";
 import { useUnseenScheduledRuns } from "@/features/scheduled-tasks";
 import {
@@ -35,6 +36,7 @@ export const AutoReadAloud: FC = () => {
     if (decision.kind === "wait") return;
     pendingRef.current = false;
     if (decision.kind !== "speak" || !active) return;
+    if (useLiveStore.getState().active) return;
     if (!useVoiceSettingsStore.getState().autoReadAloud) return;
     if (lastSpokenRef.current === decision.messageId) return;
     lastSpokenRef.current = decision.messageId;
@@ -80,6 +82,7 @@ export const AutoReadAloud: FC = () => {
       | { taskId?: unknown; runId?: unknown }
       | undefined;
     if (
+      useLiveStore.getState().active ||
       !ttsEnabled ||
       !autoReadAloud ||
       state.speech ||

@@ -467,6 +467,7 @@ from routes.llama import router as llama_router
 from routes.engines import router as engines_router
 from routes.llama_compat import is_engine_probe_path, router as llama_compat_router
 from routes.whisper import router as whisper_router
+from routes.live import router as live_router
 from routes.video_restyle import router as video_restyle_router
 from routes.npu import router as npu_router
 from routes.preview import router as preview_router
@@ -2187,6 +2188,7 @@ app.include_router(data_recipe_router, prefix = "/api/data-recipe", tags = ["dat
 app.include_router(llama_router, prefix = "/api/llama", tags = ["llama"])
 app.include_router(engines_router, prefix = "/api/engines", tags = ["engines"])
 app.include_router(whisper_router, prefix = "/api/whisper", tags = ["whisper"])
+app.include_router(live_router, prefix = "/api/live", tags = ["live"])
 app.include_router(npu_router, prefix = "/api/npu", tags = ["npu"])
 app.include_router(export_router, prefix = "/api/export", tags = ["export"])
 app.include_router(external_import_router, prefix = "/api/import", tags = ["import"])
