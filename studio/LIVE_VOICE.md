@@ -1,6 +1,6 @@
 # Live Voice in Unsloth Studio
 
-Status: design + implementation plan
+Status: design + implementation (Phases 0-3 implemented; Phase 4/5 polish pending)
 Owner: Ancolen
 Target: Unsloth Desktop (Linux first), Studio web UI where possible
 Feature flag: `UNSLOTH_STUDIO_LIVE_VOICE` (default on; set `0` to disable)
@@ -30,7 +30,7 @@ Add a first-class, hands-free voice conversation mode to the normal Studio chat:
 
 - A **Live** button next to the existing composer microphone.
 - Pressing it opens a live bar over the composer: waveform, state, live transcript,
-  screen-sharing thumbnail, mute / pause / stop.
+  screen-sharing thumbnail, mute / stop.
 - Speech is transcribed locally, sent as a normal chat message, and the assistant
   reply is spoken sentence by sentence while it streams.
 - The user can interrupt the assistant (barge-in). The default mode is turn-based;
