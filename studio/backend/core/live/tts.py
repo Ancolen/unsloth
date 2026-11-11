@@ -299,7 +299,7 @@ class AsgiTts:
         if selected_voice:
             payload["voice"] = selected_voice
         selected_language = (language or self._language or "").strip()
-        if selected_language:
+        if selected_language and selected_language.lower() != "auto":
             payload["language"] = selected_language
         headers = {
             "Authorization": f"Bearer {self._token}",

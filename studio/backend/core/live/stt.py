@@ -113,7 +113,11 @@ class AsgiStt:
         data: dict[str, str] = {"response_format": "json"}
         if selected and selected != "whisper-1":
             data["model"] = selected
-        if language and language.strip():
+        if (
+            language
+            and language.strip()
+            and language.strip().lower() != "auto"
+        ):
             data["language"] = language.strip()
         files = {"file": ("utterance.wav", wav_bytes, "audio/wav")}
         headers = {
