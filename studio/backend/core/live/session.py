@@ -598,6 +598,8 @@ class LiveSession:
             except asyncio.CancelledError:
                 return
             except Exception as exc:  # noqa: BLE001 - a TTS failure must not kill listening
+                if item.generation != self._tts_generation:
+                    continue
                 logger.warning("live.tts_failed", error = str(exc))
                 await self._send(
                     error_event(
