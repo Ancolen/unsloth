@@ -63,7 +63,7 @@ mod imp {
     /// Keep a short history so a future change detector can compare frames
     /// without changing the capture thread.  The UI only reads the newest one.
     const MAX_FRAMES: usize = 6;
-    const CAPTURE_WIDTH: i32 = 1280;
+    const CAPTURE_LONG_SIDE: i32 = 1280;
     const JPEG_QUALITY: i32 = 80;
     const RESTORE_TOKEN_FILE: &str = "live-screencast-token";
     const STATE_UNAVAILABLE: &str = "The live screen state is unavailable.";
@@ -264,10 +264,25 @@ mod imp {
         drop(capture);
     }
 
+    fn target_frame_size(size: Option<(i32, i32)>) -> (i32, i32) {
+        let Some((width, height)) = size else {
+            return (1280, 720);
+        };
+        let width = width.max(1);
+        let height = height.max(1);
+        let long_side = width.max(height);
+        let scale = (CAPTURE_LONG_SIDE as f64 / long_side as f64).min(1.0);
+        let target_width = (((width as f64 * scale).round() as i32).max(2)) & !1;
+        let target_height = (((height as f64 * scale).round() as i32).max(2)) & !1;
+        (target_width, target_height)
+    }
+
     fn build_pipeline(
         fd: &OwnedFd,
         node_id: u32,
         generation: u64,
+        target_width: i32,
+        target_height: i32,
     ) -> Result<(gst::Pipeline, gst::Bus), String> {
         gst::init().map_err(|error| format!("GStreamer could not start: {error}"))?;
 
@@ -282,7 +297,7 @@ mod imp {
             .property("do-timestamp", true)
             .build()
             .map_err(|error| format!("Could not create the PipeWire source: {error}"))?;
-        build_pipeline_from_source(source, generation)
+        build_pipeline_from_source(source, generation, target_width, target_height)
     }
 
     /// Assemble the shared encode path.  Kept separate from `build_pipeline` so
@@ -290,6 +305,8 @@ mod imp {
     fn build_pipeline_from_source(
         source: gst::Element,
         generation: u64,
+        target_width: i32,
+        target_height: i32,
     ) -> Result<(gst::Pipeline, gst::Bus), String> {
         for factory in [
             "videorate",
@@ -314,7 +331,8 @@ mod imp {
             .build()
             .map_err(|error| format!("Could not create the frame scaler: {error}"))?;
         let caps = gst::Caps::builder("video/x-raw")
-            .field("width", CAPTURE_WIDTH)
+            .field("width", target_width)
+            .field("height", target_height)
             .field("pixel-aspect-ratio", gst::Fraction::new(1, 1))
             .build();
         let filter = gst::ElementFactory::make("capsfilter")
@@ -572,8 +590,9 @@ mod imp {
             );
         };
         let node_id = stream.pipe_wire_node_id();
-        let source = stream
-            .size()
+        let stream_size = stream.size();
+        let (target_width, target_height) = target_frame_size(stream_size);
+        let source = stream_size
             .map(|(width, height)| format!("screen {width}x{height}"))
             .unwrap_or_else(|| "screen".to_string());
         if let Some(token) = streams.restore_token() {
@@ -609,7 +628,7 @@ mod imp {
         let thread = match thread::Builder::new()
             .name("live-screen-capture".to_string())
             .spawn(move || {
-                match build_pipeline(&fd, node_id, generation) {
+                match build_pipeline(&fd, node_id, generation, target_width, target_height) {
                     Ok((pipeline, bus)) => match pipeline.set_state(gst::State::Playing) {
                         Ok(_) => {
                             let _ = started_tx.send(Ok(()));
@@ -799,7 +818,8 @@ mod imp {
                 .property("num-buffers", 2i32)
                 .build()
                 .expect("videotestsrc");
-            let (pipeline, bus) = build_pipeline_from_source(source, generation).expect("pipeline");
+            let (pipeline, bus) =
+                build_pipeline_from_source(source, generation, 1280, 960).expect("pipeline");
             pipeline
                 .set_state(gst::State::Playing)
                 .expect("pipeline playing");
@@ -815,9 +835,18 @@ mod imp {
             );
 
             let frame = latest().expect("an encoded frame");
-            assert!(frame.width > 0 && frame.height > 0);
+            assert_eq!((frame.width, frame.height), (1280, 960));
             assert!(frame.jpeg_base64.starts_with("/9j/"));
             let _ = stop();
+        }
+
+        #[test]
+        fn target_size_caps_the_long_side_and_keeps_the_aspect() {
+            assert_eq!(target_frame_size(Some((2560, 1440))), (1280, 720));
+            assert_eq!(target_frame_size(Some((1920, 1080))), (1280, 720));
+            assert_eq!(target_frame_size(Some((1080, 1920))), (720, 1280));
+            assert_eq!(target_frame_size(Some((800, 600))), (800, 600));
+            assert_eq!(target_frame_size(None), (1280, 720));
         }
     }
 }

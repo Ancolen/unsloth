@@ -471,8 +471,9 @@ xdg-desktop-portal ScreenCast (ashpd / D-Bus)
   source without a picker (GNOME suppresses the dialog with `persist_mode=2`).
 - The portal returns a `restore_token` and a PipeWire node; `OpenPipeWireRemote`
   supplies the remote fd, which `pipewiresrc` consumes alongside `path=<node>`.
-- Frames are downscaled to 1280 px wide, JPEG quality 80, and kept in a six-frame
-  in-memory ring buffer. No frame is written to disk.
+- Frames are downscaled so the long side is at most 1280 px, with the target
+  aspect taken from the portal stream size (2560x1440 -> 1280x720), JPEG quality
+  80. No frame is written to disk; a six-frame in-memory ring buffer is kept.
 - `pause` drops frames without tearing down the portal stream, so resume is
   immediate; `stop` sets the pipeline to NULL, joins the capture thread (with a
   2 s escape hatch) and closes the portal session.
@@ -600,8 +601,9 @@ Download flow:
 ### Phase 3 - Screen sharing (1.5-2 weeks) - implemented, HIL validation pending
 
 - Tauri portal + PipeWire + JPEG capture, restore token, pause, Linux packaging:
-  implemented in `src-tauri/src/live_screen.rs` (ashpd + GStreamer, 1 fps, 1280 px,
-  six-frame ring, generation-guarded restart/stop).
+  implemented in `src-tauri/src/live_screen.rs` (ashpd + GStreamer, 1 fps,
+  aspect-preserving 1280 px long side, six-frame ring, generation-guarded
+  restart/stop).
 - Frontend screen toggle, preview, frame attachment, vision checks, cloud consent:
   implemented (Linux desktop detection, start-state spinner, status-driven error
   recovery, attached JPEG on the next live turn).
