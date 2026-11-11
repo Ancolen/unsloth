@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import asyncio
 import math
-import os
 import time
 from collections import deque
 from dataclasses import dataclass, field, replace
@@ -21,6 +20,7 @@ from pathlib import Path
 from typing import Any, Awaitable, Callable, Deque, Optional
 
 from core.live import audio
+from core.live.assets import asset_by_role, available_asset_path
 from core.live.endpoint import EndpointConfig, EndpointDetector, SmartTurnScorer
 from core.live.protocol import (
     FRAME_MS,
@@ -42,6 +42,11 @@ logger = get_logger(__name__)
 
 SendJson = Callable[[dict[str, Any]], Awaitable[None]]
 SendBytes = Callable[[bytes], Awaitable[None]]
+
+
+def _smart_turn_path() -> Optional[Path]:
+    asset = asset_by_role("endpoint")
+    return available_asset_path(asset) if asset is not None else None
 
 
 @dataclass
@@ -125,10 +130,8 @@ class LiveSession:
         self.config = config or LiveConfig()
         self._vad = vad or build_vad(threshold = self.config.vad_threshold)
         self._endpoint = endpoint or EndpointDetector(self.config.endpoint)
-        smart_turn_env = (os.environ.get("UNSLOTH_LIVE_SMART_TURN_MODEL") or "").strip()
-        self._smart_turn = smart_turn or SmartTurnScorer(
-            model_path = Path(smart_turn_env) if smart_turn_env else None
-        )
+        smart_turn_path = _smart_turn_path()
+        self._smart_turn = smart_turn or SmartTurnScorer(model_path = smart_turn_path)
         self._audio_queue: asyncio.Queue[bytes] = asyncio.Queue(maxsize = 96)
         self._stt_queue: asyncio.Queue[tuple[str, bytes]] = asyncio.Queue(maxsize = 8)
         self._tts_queue: asyncio.Queue[SpeakItem] = asyncio.Queue()

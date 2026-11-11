@@ -5,6 +5,7 @@ import { useVoiceSettingsStore } from "@/features/settings/stores/voice-settings
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { type FC, useEffect } from "react";
+import { LiveAssetSettings } from "./live-asset-settings";
 import { liveController } from "./live-controller";
 import { liveScreenSupported } from "./live-screen";
 import { useLiveStore } from "./live-store";
@@ -93,6 +94,8 @@ export const LiveSettings: FC = () => {
         </span>
         <span>{detectorLabel(status?.capabilities.endpoint)}</span>
       </div>
+
+      <LiveAssetSettings />
 
       {fakeEngine ? (
         <p className="text-xs text-amber-600 dark:text-amber-400">

@@ -20,9 +20,12 @@ Feature flag: `UNSLOTH_STUDIO_LIVE_VOICE` (default on; set `0` to disable)
 - Local voices: optional Piper and XTTS-v2 adapters are implemented behind
   `UNSLOTH_LIVE_TTS=piper|xtts`; both return WAV per sentence. XTTS downloads its
   pinned checkpoint from Hugging Face after an explicit CPML acceptance flag.
-- Pending: Silero/Smart Turn asset auto-download, a model-picker UI for the
-  local engines (they are env-selected today), partial transcripts, and Phase 5
-  hardening.
+- Detector assets: the pinned Silero VAD v6.2.3 and Smart Turn v3.2 CPU files are
+  listed in the Settings -> Voice live block and downloaded on demand with an
+  explicit size and SHA-256 check; activating them still requires `onnxruntime`.
+- Pending: automatic detector download on first run (the manual install is
+  implemented), a model-picker UI for the local engines (they are env-selected
+  today), partial transcripts, and Phase 5 hardening.
 
 ## 1. Goal
 
@@ -37,8 +40,9 @@ Add a first-class, hands-free voice conversation mode to the normal Studio chat:
   barge-in is opt-in and gated by echo-cancellation quality.
 - Screen sharing is a first-class toggle: the latest screen frame is attached to
   the next chat turn when the selected model supports vision.
-- Models (chat/vision, STT, TTS, VAD/endpoint) are downloaded through Studio's
-  existing Hugging Face model manager. Nothing depends on an external application.
+- Models (chat/vision, STT, TTS) are downloaded through Studio's existing Hugging
+  Face model manager; the small VAD/endpoint files use the pinned live-asset
+  downloader. Nothing depends on an external application.
 
 The feature is implemented **inside** Studio:
 
@@ -192,8 +196,8 @@ studio/backend/core/live/
   endpoint.py     Smart Turn v3.2 ONNX + silence/semantic endpointing
   stt.py          adapter over Studio's STT engines
   tts.py          sentence queue, prefetch, cancellation
-  models.py       live model catalog and warmup/readiness
-  events.py       event types and serialization
+  assets.py       pinned VAD/endpoint catalog and hash-checked downloads
+  models.py       feature flag and readiness/capability status
 ```
 
 `main.py` registers the router once:
@@ -549,8 +553,9 @@ Environment overrides (all optional):
 | `UNSLOTH_LIVE_XTTS_DEVICE` | `auto`, `cpu`, `cuda` or `gpu:N` |
 | `UNSLOTH_LIVE_XTTS_DETERMINISTIC=1` | Disable sampling for reproducible prosody (benchmarks) |
 | `UNSLOTH_LIVE_XTTS_ACCEPT_LICENSE=1` | Explicitly accept the CPML non-commercial license |
-| `UNSLOTH_LIVE_VAD_MODEL` | Silero VAD ONNX path; falls back to the energy VAD |
-| `UNSLOTH_LIVE_SMART_TURN_MODEL` | Smart Turn ONNX path; falls back to 900 ms extended endpointing |
+| `UNSLOTH_LIVE_ASSET_DIR` | Managed directory for downloaded VAD/endpoint assets (default `<studio home>/cache/live`) |
+| `UNSLOTH_LIVE_VAD_MODEL` | Explicit Silero VAD ONNX path; overrides the managed download |
+| `UNSLOTH_LIVE_SMART_TURN_MODEL` | Explicit Smart Turn ONNX path; overrides the managed download |
 
 The Piper path is installed on demand, not bundled: install `piper-tts` in
 Studio's managed Python environment, then point `UNSLOTH_LIVE_PIPER_MODEL` at a
@@ -574,18 +579,26 @@ shows the same values so a degraded setup is visible before a session starts.
 "Active" means the asset is installed *and* `onnxruntime` is importable; a model
 file alone does not claim Silero/Smart Turn while the engine would fall back.
 
-**Planned download flow (Phase 4; not implemented yet).** Today the local
-engine choice is env-based and the XTTS checkpoint downloads directly with
-`huggingface_hub` on first use; the rest of the stack reuses Studio's existing
-STT/TTS/chat model pages.
+**Detector asset download (Phase 4; implemented).** `core/live/assets.py` owns
+the pinned catalog: role, name, source, repo, revision, filename, URL, size,
+license and SHA-256.  `POST /api/live/assets/{role}/download` streams the file to
+a temporary path, verifies the exact byte count and hash, then atomically renames
+it into the managed directory.  A mismatch or an interrupted transfer leaves no
+file behind.  The Settings -> Voice block lists both assets with their state and
+a Download button; a user-selected `UNSLOTH_LIVE_VAD_MODEL` /
+`UNSLOTH_LIVE_SMART_TURN_MODEL` path still wins.
 
-- Use Studio's existing HF hub/download manager (queue, progress, cancel, checksum).
-- `LiveModelCatalog` entries carry role, repo, revision, files, size, license,
-  engine and recommended combinations.
-- Small VAD/endpoint ONNX assets are pinned and auto-downloaded with SHA-256
-  verification.
-- License acceptance is bound to repo + revision (XTTS especially).
-- After install, the UI shows "Live ready" and offers mic/speaker/screen tests.
+- VAD: official `snakers4/silero-vad` v6.2.3 file at commit
+  `5cd79456`, 2.3 MB, MIT.
+- Endpoint: `pipecat-ai/smart-turn-v3` v3.2 CPU ONNX at commit `f766f81d`,
+  8.7 MB, BSD-2-Clause.
+- `onnxruntime` is not part of the base environment.  With it, a downloaded asset
+  becomes active automatically (status turns from `energy` to `silero` and from
+  `silence` to `smart_turn`); without it the fallbacks stay in place and the UI
+  shows the missing-runtime message.
+- Still open: automatic first-run download, download progress/cancel, and a
+  "Live ready" test page for mic/speaker/screen.  XTTS keeps its own
+  `huggingface_hub` download because its CPML acceptance is part of the path.
 
 ## 9. Implementation phases
 

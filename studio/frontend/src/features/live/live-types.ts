@@ -20,18 +20,23 @@ export interface LiveCapabilities {
   screenCapture?: string;
   stt?: string;
   tts?: string;
+  onnxruntime?: string;
   vad?: string;
   endpoint?: string;
 }
 
 export interface LiveAssetStatus {
   role: string;
+  name?: string;
+  source?: string;
   repo: string;
   revision: string;
   filename: string;
   sha256?: string;
   sizeBytes?: number | null;
+  license?: string;
   installed?: boolean;
+  active?: boolean;
   envOverride?: string;
 }
 

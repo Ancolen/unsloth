@@ -16,6 +16,7 @@ from urllib.parse import urlsplit
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 
 from auth.authentication import get_current_subject, subject_for_header_or_query_token
+from core.live.assets import AssetError, asset_by_role, download_asset
 from core.live.models import live_enabled, status
 from core.live.session import LiveSession
 from core.live.stt import build_stt
@@ -59,6 +60,25 @@ async def live_status(
 ) -> dict:
     """Capabilities and the feature flag; safe to poll before opening a session."""
     return status().to_dict()
+
+
+@router.post("/assets/{role}/download")
+async def live_asset_download(
+    role: str,
+    current_subject: str = Depends(get_current_subject),
+) -> dict:
+    """Download one pinned VAD/endpoint asset and verify its SHA-256."""
+    if not live_enabled():
+        raise HTTPException(status_code = 403, detail = "Live voice is disabled.")
+    asset = asset_by_role(role)
+    if asset is None:
+        raise HTTPException(
+            status_code = 404, detail = f"Unknown live asset {role!r}."
+        )
+    try:
+        return await download_asset(asset)
+    except AssetError as exc:
+        raise HTTPException(status_code = 502, detail = str(exc)) from exc
 
 
 @router.websocket("/ws")

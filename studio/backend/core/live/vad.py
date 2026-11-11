@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from core.live import audio
+from core.live.assets import asset_by_role, available_asset_path
 from loggers import get_logger
 
 logger = get_logger(__name__)
@@ -181,4 +182,8 @@ def build_vad(*, threshold: float = 0.015) -> Any:
     model_path = os.environ.get("UNSLOTH_LIVE_VAD_MODEL", "").strip()
     if model_path:
         return SileroVad(model_path = Path(model_path), fallback = EnergyVad(threshold = threshold))
+    asset = asset_by_role("vad")
+    installed = available_asset_path(asset) if asset is not None else None
+    if installed is not None:
+        return SileroVad(model_path = installed, fallback = EnergyVad(threshold = threshold))
     return EnergyVad(threshold = threshold)

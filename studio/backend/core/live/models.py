@@ -4,21 +4,20 @@
 """Feature flag, platform capability and the live model catalog surface.
 
 The live engine deliberately reuses Studio's model manager: STT and TTS ids are
-the ids the Voice settings and model hub already understand.  This module only
-reports readiness/capabilities and keeps the pinned VAD/endpoint asset metadata
-in one place.  Download actions reuse the existing Hugging Face pipeline.
+the ids the Voice settings and model hub already understand.  This module reports
+readiness/capabilities; the pinned VAD/endpoint assets and their download path
+live in `core.live.assets`.
 """
 
 from __future__ import annotations
 
-import importlib.util
 import os
 import platform
 import sys
-from dataclasses import dataclass, field, replace
-from pathlib import Path
-from typing import Any, Optional
+from dataclasses import dataclass, field
+from typing import Any
 
+from core.live import assets as live_assets
 from core.live.protocol import PROTOCOL_VERSION, SAMPLE_RATE
 
 
@@ -39,83 +38,6 @@ def _engine_kind(env_name: str) -> str:
 
 
 @dataclass(frozen = True)
-class LiveAsset:
-    """A small pinned asset (VAD/endpoint) the live engine needs."""
-
-    role: str
-    repo: str
-    revision: str
-    filename: str
-    sha256: str = ""
-    size_bytes: Optional[int] = None
-    installed: bool = False
-    active: bool = False
-    env_override: str = ""
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "role": self.role,
-            "repo": self.repo,
-            "revision": self.revision,
-            "filename": self.filename,
-            "sha256": self.sha256,
-            "sizeBytes": self.size_bytes,
-            "installed": self.installed,
-            "active": self.active,
-            "envOverride": self.env_override,
-        }
-
-
-# These are the same pinned families the Screen Companion reference used.  They
-# are intentionally declared here (not downloaded at import) so the catalog can
-# grow without changing the socket protocol.
-LIVE_ASSETS: tuple[LiveAsset, ...] = (
-    LiveAsset(
-        role = "vad",
-        repo = "snakers4/silero-vad",
-        revision = "v6.2.3",
-        filename = "silero_vad.onnx",
-        env_override = "UNSLOTH_LIVE_VAD_MODEL",
-    ),
-    LiveAsset(
-        role = "endpoint",
-        repo = "pipecat-ai/smart-turn",
-        revision = "v3.2",
-        filename = "smart_turn.onnx",
-        env_override = "UNSLOTH_LIVE_SMART_TURN_MODEL",
-    ),
-)
-
-
-def _asset_installed(asset: LiveAsset) -> bool:
-    value = os.environ.get(asset.env_override, "").strip()
-    return bool(value) and Path(value).expanduser().is_file()
-
-
-_onnxruntime: Optional[bool] = None
-
-
-def _onnxruntime_available() -> bool:
-    """An installed ONNX asset is inert without the runtime; report it honestly."""
-    global _onnxruntime
-    if _onnxruntime is None:
-        try:
-            _onnxruntime = importlib.util.find_spec("onnxruntime") is not None
-        except (ImportError, ValueError):
-            _onnxruntime = False
-    return _onnxruntime
-
-
-def _assets() -> tuple[LiveAsset, ...]:
-    runtime = _onnxruntime_available()
-    resolved: list[LiveAsset] = []
-    for asset in LIVE_ASSETS:
-        installed = _asset_installed(asset)
-        resolved.append(replace(asset, installed = installed, active = installed and runtime))
-    return tuple(resolved)
-
-
-@dataclass(frozen = True)
 class LiveStatus:
     enabled: bool
     protocol: int
@@ -124,10 +46,11 @@ class LiveStatus:
     screen_capture: str
     stt_engine: str
     tts_engine: str
-    assets: tuple[LiveAsset, ...] = field(default_factory = tuple)
+    onnxruntime: bool
+    assets: tuple[dict[str, Any], ...] = field(default_factory = tuple)
 
     def to_dict(self) -> dict[str, Any]:
-        by_role = {asset.role: asset for asset in self.assets}
+        by_role = {asset["role"]: asset for asset in self.assets}
         return {
             "enabled": self.enabled,
             "protocol": self.protocol,
@@ -138,19 +61,20 @@ class LiveStatus:
                 "screenCapture": self.screen_capture,
                 "stt": self.stt_engine,
                 "tts": self.tts_engine,
+                "onnxruntime": "available" if self.onnxruntime else "missing",
                 "vad": (
                     "silero"
-                    if by_role.get("vad") is not None and by_role["vad"].active
+                    if by_role.get("vad") is not None and by_role["vad"]["active"]
                     else "energy"
                 ),
                 "endpoint": (
                     "smart_turn"
                     if by_role.get("endpoint") is not None
-                    and by_role["endpoint"].active
+                    and by_role["endpoint"]["active"]
                     else "silence"
                 ),
             },
-            "assets": [asset.to_dict() for asset in self.assets],
+            "assets": list(self.assets),
         }
 
 
@@ -163,5 +87,6 @@ def status() -> LiveStatus:
         screen_capture = "tauri" if screen_capture_supported() else "unsupported",
         stt_engine = _engine_kind("UNSLOTH_LIVE_STT"),
         tts_engine = _engine_kind("UNSLOTH_LIVE_TTS"),
-        assets = _assets(),
+        onnxruntime = live_assets.onnxruntime_available(),
+        assets = live_assets.asset_states(),
     )

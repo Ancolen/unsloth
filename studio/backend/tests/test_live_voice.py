@@ -6,11 +6,15 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 from types import SimpleNamespace
 from typing import Any
 
+import httpx
+
 from core.live import audio
+from core.live.assets import AssetError, LiveAsset, download_asset, verify_installed_asset
 from core.live.endpoint import EndpointConfig, EndpointDetector, SmartTurnScorer
 from core.live.models import status as live_status
 from core.live.protocol import (
@@ -48,19 +52,77 @@ def test_status_only_claims_onnx_detectors_when_the_runtime_is_available(
     monkeypatch.setenv("UNSLOTH_LIVE_VAD_MODEL", str(vad_path))
     monkeypatch.setenv("UNSLOTH_LIVE_SMART_TURN_MODEL", str(turn_path))
 
-    import core.live.models as models
+    import core.live.assets as live_assets
 
-    monkeypatch.setattr(models, "_onnxruntime_available", lambda: False)
+    monkeypatch.setattr(live_assets, "onnxruntime_available", lambda: False)
     degraded = live_status().to_dict()
     assert degraded["capabilities"]["vad"] == "energy"
     assert degraded["capabilities"]["endpoint"] == "silence"
     assert all(asset["installed"] and not asset["active"] for asset in degraded["assets"])
 
-    monkeypatch.setattr(models, "_onnxruntime_available", lambda: True)
+    monkeypatch.setattr(live_assets, "onnxruntime_available", lambda: True)
     ready = live_status().to_dict()
     assert ready["capabilities"]["vad"] == "silero"
     assert ready["capabilities"]["endpoint"] == "smart_turn"
     assert all(asset["active"] for asset in ready["assets"])
+
+
+def _test_asset(payload: bytes, *, sha256: str = "") -> LiveAsset:
+    return LiveAsset(
+        role = "test",
+        name = "Test asset",
+        source = "test",
+        repo = "local/test",
+        revision = "1",
+        filename = "test.onnx",
+        url = "https://example.test/test.onnx",
+        sha256 = sha256 or hashlib.sha256(payload).hexdigest(),
+        size_bytes = len(payload),
+        license = "MIT",
+        env_override = "UNSLOTH_LIVE_TEST_ASSET",
+    )
+
+
+def test_download_asset_verifies_and_installs(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("UNSLOTH_LIVE_ASSET_DIR", str(tmp_path))
+    payload = b"pinned-onnx-bytes"
+    asset = _test_asset(payload)
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert str(request.url) == asset.url
+        return httpx.Response(200, content = payload)
+
+    async def scenario() -> dict[str, Any]:
+        async with httpx.AsyncClient(transport = httpx.MockTransport(handler)) as client:
+            return await download_asset(asset, client = client)
+
+    state = asyncio.run(scenario())
+    assert state["installed"] is True
+    assert (tmp_path / asset.filename).read_bytes() == payload
+    assert verify_installed_asset(asset) is True
+    assert not list(tmp_path.glob("*.part"))
+
+
+def test_download_asset_rejects_a_hash_mismatch(tmp_path, monkeypatch) -> None:
+    monkeypatch.setenv("UNSLOTH_LIVE_ASSET_DIR", str(tmp_path))
+    payload = b"tampered"
+    asset = _test_asset(payload, sha256 = "0" * 64)
+
+    def handler(_request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content = payload)
+
+    async def scenario() -> None:
+        async with httpx.AsyncClient(transport = httpx.MockTransport(handler)) as client:
+            await download_asset(asset, client = client)
+
+    try:
+        asyncio.run(scenario())
+    except AssetError as exc:
+        assert "SHA-256" in str(exc)
+    else:
+        raise AssertionError("expected AssetError for a bad hash")
+    assert not (tmp_path / asset.filename).exists()
+    assert not list(tmp_path.glob("*.part"))
 
 
 def test_protocol_parses_and_validates_hello() -> None:

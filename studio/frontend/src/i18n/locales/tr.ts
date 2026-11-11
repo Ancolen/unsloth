@@ -6149,6 +6149,16 @@ export const tr = {
       vadEnergy: "Enerji yedeği",
       endpointSmartTurn: "Smart Turn",
       endpointSilence: "Sessizlik süresi",
+      detectorModels: "Algılama modelleri",
+      assetDownload: "İndir",
+      assetDownloading: "İndiriliyor…",
+      assetActive: "Etkin",
+      assetInstalled: "Kurulu",
+      assetNotInstalled: "Kurulu değil",
+      assetRuntimeMissing: "Kurulu, ONNX çalışma zamanı yok",
+      assetDownloadFailed: "Algılama modeli indirilemedi.",
+      onnxRuntimeMissing:
+        "Studio'nun Python ortamında onnxruntime kurulu değil; algılama modelleri etkinleşmez ve Canlı ses enerji VAD'ı ile sessizlik zaman aşımını kullanır.",
       checking: "Kontrol ediliyor…",
       unknown: "Bilinmiyor",
       fakeEngineWarning:

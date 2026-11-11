@@ -3,7 +3,11 @@
 
 import { authFetch, getAuthToken } from "@/features/auth";
 import { apiUrl } from "@/lib/api-base";
-import type { LiveServerEvent, LiveStatus } from "./live-types";
+import type {
+  LiveAssetStatus,
+  LiveServerEvent,
+  LiveStatus,
+} from "./live-types";
 
 export function getLiveToken(): string | null {
   return getAuthToken();
@@ -23,6 +27,29 @@ export async function fetchLiveStatus(): Promise<LiveStatus | null> {
   } catch {
     return null;
   }
+}
+
+export async function downloadLiveAsset(
+  role: string,
+): Promise<LiveAssetStatus> {
+  const response = await authFetch(
+    `/api/live/assets/${encodeURIComponent(role)}/download`,
+    { method: "POST" },
+  );
+  const payload = (await response.json().catch(() => null)) as
+    | (LiveAssetStatus & { detail?: unknown })
+    | null;
+  if (!response.ok) {
+    const detail =
+      payload && typeof payload.detail === "string" ? payload.detail : "";
+    throw new Error(
+      detail || "The live detector model could not be downloaded.",
+    );
+  }
+  if (!payload || typeof payload !== "object") {
+    throw new Error("The live detector download returned an invalid response.");
+  }
+  return payload;
 }
 
 export function liveWebSocketUrl(token: string): string {

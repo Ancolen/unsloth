@@ -5795,6 +5795,16 @@ export const en = {
       vadEnergy: "Energy fallback",
       endpointSmartTurn: "Smart Turn",
       endpointSilence: "Silence timeout",
+      detectorModels: "Detector models",
+      assetDownload: "Download",
+      assetDownloading: "Downloading…",
+      assetActive: "Active",
+      assetInstalled: "Installed",
+      assetNotInstalled: "Not installed",
+      assetRuntimeMissing: "Installed, ONNX runtime missing",
+      assetDownloadFailed: "The detector model could not be downloaded.",
+      onnxRuntimeMissing:
+        "onnxruntime is not installed in Studio's Python environment, so the detector models stay inactive; Live uses the energy VAD and silence timeout.",
       checking: "Checking…",
       unknown: "Unknown",
       fakeEngineWarning:
