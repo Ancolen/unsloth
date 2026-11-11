@@ -1,6 +1,6 @@
 # Live Voice in Unsloth Studio
 
-Status: design + implementation (Phases 0-3 implemented; Phase 4/5 polish pending)
+Status: design + implementation (Phases 0-3 complete; Phase 4 assets, thresholds and settings implemented, local-engine picker pending; Phase 5 polish pending)
 Owner: Ancolen
 Target: Unsloth Desktop (Linux first), Studio web UI where possible
 Feature flag: `UNSLOTH_STUDIO_LIVE_VOICE` (default on; set `0` to disable)
@@ -669,20 +669,30 @@ a Download button; a user-selected `UNSLOTH_LIVE_VAD_MODEL` /
 - Exit: toggle -> picker -> preview <= 2 s; the sent message carries the frame; no
   cloud upload without consent. Needs a GNOME Wayland run and packaged-build check.
 
-### Phase 4 - Model catalog and Turkish voice (1-2 weeks)
+### Phase 4 - Model catalog and Turkish voice (1-2 weeks) - largely implemented
 
 - Piper Turkish + optional XTTS, STT alternatives, live catalog, downloads,
   licenses, VRAM estimates.
 - Settings -> Live: readiness checklist, tests, mode selection, thresholds.
 - Exit: clean install can download and run the stack; Turkish STT/TTS quality
   checked; errors actionable.
+- Implemented: pinned VAD/endpoint catalog with hash-checked download and
+  automatic first-run fetch, readiness grid, advanced endpoint thresholds,
+  cloud-screen consent, mode/language controls.
+- Remaining: local Piper/XTTS engine picker (still env-selected), download
+  progress/cancel, mic/speaker test page.
 
-### Phase 5 - Hardening and polish (1-2 weeks)
+### Phase 5 - Hardening and polish (1-2 weeks) - partly implemented
 
 - Reconnect/error recovery, idle unload, metrics, i18n, accessibility, shortcuts,
   documentation.
 - 30-minute soak, VRAM/CPU, leaks, Studio regression suites.
 - Exit: all metrics met; existing Studio tests green.
+- Implemented: error paths return to idle with actionable text, accessibility
+  labels/announcements, Turkish/English parity, start/stop race guards, screen
+  pause, and cloud-screen consent.
+- Remaining: reconnect policy, per-turn latency metrics, keyboard shortcuts,
+  30-minute soak and packaged-build/HIL verification.
 
 ### Phase 6 - Optional true full-duplex
 
