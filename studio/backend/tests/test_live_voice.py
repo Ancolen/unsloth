@@ -100,7 +100,7 @@ def test_download_asset_verifies_and_installs(tmp_path, monkeypatch) -> None:
     assert state["installed"] is True
     assert (tmp_path / asset.filename).read_bytes() == payload
     assert verify_installed_asset(asset) is True
-    assert not list(tmp_path.glob("*.part"))
+    assert not [path for path in tmp_path.iterdir() if path.name.endswith(".part")]
 
 
 def test_download_asset_rejects_a_hash_mismatch(tmp_path, monkeypatch) -> None:
@@ -122,7 +122,7 @@ def test_download_asset_rejects_a_hash_mismatch(tmp_path, monkeypatch) -> None:
     else:
         raise AssertionError("expected AssetError for a bad hash")
     assert not (tmp_path / asset.filename).exists()
-    assert not list(tmp_path.glob("*.part"))
+    assert not [path for path in tmp_path.iterdir() if path.name.endswith(".part")]
 
 
 def test_protocol_parses_and_validates_hello() -> None:
