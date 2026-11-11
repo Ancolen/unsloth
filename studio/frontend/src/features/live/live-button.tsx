@@ -33,6 +33,7 @@ export const LiveButton: FC<{ disabled?: boolean }> = ({ disabled }) => {
     <TooltipIconButton
       tooltip={label}
       aria-label={label}
+      aria-pressed={active}
       side="bottom"
       type="button"
       className={cn(

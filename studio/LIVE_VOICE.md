@@ -23,6 +23,9 @@ Feature flag: `UNSLOTH_STUDIO_LIVE_VOICE` (default on; set `0` to disable)
 - Detector assets: the pinned Silero VAD v6.2.3 and Smart Turn v3.2 CPU files are
   listed in the Settings -> Voice live block and downloaded on demand with an
   explicit size and SHA-256 check; activating them still requires `onnxruntime`.
+- Accessibility: the live bar is a labeled region with polite state/transcript
+  announcements, `role="alert"` errors, pressed-state toggles and translated
+  language names instead of raw codes.
 - Pending: automatic detector download on first run (the manual install is
   implemented), a model-picker UI for the local engines (they are env-selected
   today), partial transcripts, and Phase 5 hardening.

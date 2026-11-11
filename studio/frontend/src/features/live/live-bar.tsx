@@ -84,13 +84,20 @@ export const LiveBar: FC = () => {
   });
 
   return (
-    <div className="unsloth-live-bar flex min-w-0 flex-1 flex-col gap-1.5 rounded-2xl border border-border/70 bg-background/95 px-3 py-2 shadow-sm">
+    <div
+      className="unsloth-live-bar flex min-w-0 flex-1 flex-col gap-1.5 rounded-2xl border border-border/70 bg-background/95 px-3 py-2 shadow-sm"
+      role="region"
+      aria-label={t("live.settings.title")}
+    >
       <div className="flex min-w-0 items-center gap-2.5">
         <span
           className={cn("size-2 shrink-0 rounded-full", stateDot(state))}
           aria-hidden="true"
         />
-        <span className="shrink-0 text-xs font-medium text-foreground">
+        <span
+          className="shrink-0 text-xs font-medium text-foreground"
+          aria-live="polite"
+        >
           {t(STATE_KEYS[state])}
         </span>
         <div
@@ -121,6 +128,7 @@ export const LiveBar: FC = () => {
             aria-label={
               mode === "barge_in" ? t("live.mode.bargeIn") : t("live.mode.turn")
             }
+            aria-pressed={mode === "barge_in"}
             type="button"
             className={cn(
               "size-8 rounded-full text-xs",
@@ -145,6 +153,7 @@ export const LiveBar: FC = () => {
               aria-label={
                 screenActive ? t("live.screenOff") : t("live.screenOn")
               }
+              aria-pressed={screenActive}
               type="button"
               className={cn(
                 "size-8 rounded-full",
@@ -171,6 +180,7 @@ export const LiveBar: FC = () => {
               aria-label={
                 screenPaused ? t("live.screenResume") : t("live.screenPause")
               }
+              aria-pressed={screenPaused}
               type="button"
               className={cn(
                 "size-8 rounded-full",
@@ -188,6 +198,7 @@ export const LiveBar: FC = () => {
           <TooltipIconButton
             tooltip={muted ? t("live.unmute") : t("live.mute")}
             aria-label={muted ? t("live.unmute") : t("live.mute")}
+            aria-pressed={muted}
             type="button"
             className={cn("size-8 rounded-full", muted && "text-destructive")}
             onClick={() => liveController.setMuted(!muted)}
@@ -209,6 +220,7 @@ export const LiveBar: FC = () => {
         <p
           className="min-w-0 flex-1 truncate text-xs text-muted-foreground"
           dir="auto"
+          aria-live="polite"
         >
           {transcript || t("live.hint")}
         </p>
@@ -219,7 +231,10 @@ export const LiveBar: FC = () => {
         ) : null}
       </div>
       {error ? (
-        <div className="flex items-start gap-2 rounded-xl bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive">
+        <div
+          className="flex items-start gap-2 rounded-xl bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive"
+          role="alert"
+        >
           <span className="min-w-0 flex-1" dir="auto">
             {error}
           </span>

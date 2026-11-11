@@ -11,7 +11,11 @@ import { LiveEndpointSettings } from "./live-endpoint-settings";
 import { liveScreenSupported } from "./live-screen";
 import { useLiveStore } from "./live-store";
 
-const LANGUAGES = ["tr", "en", "auto"];
+const LANGUAGES = [
+  { value: "tr", label: "live.settings.languageTr" },
+  { value: "en", label: "live.settings.languageEn" },
+  { value: "auto", label: "live.settings.languageAuto" },
+] as const;
 
 /**
  * Compact Live settings block.  It is rendered inside Settings → Voice so the
@@ -147,9 +151,9 @@ export const LiveSettings: FC = () => {
             liveController.setLanguage(event.target.value);
           }}
         >
-          {LANGUAGES.map((value) => (
-            <option key={value} value={value}>
-              {value}
+          {LANGUAGES.map((language) => (
+            <option key={language.value} value={language.value}>
+              {t(language.label)}
             </option>
           ))}
         </select>
