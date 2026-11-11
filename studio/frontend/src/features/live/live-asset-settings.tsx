@@ -72,6 +72,7 @@ export const LiveAssetSettings = () => {
               {asset.sizeBytes
                 ? ` · ${(asset.sizeBytes / (1024 * 1024)).toFixed(1)} MB`
                 : ""}
+              {asset.license ? ` · ${asset.license}` : ""}
             </div>
           </div>
           {asset.installed ? null : (
