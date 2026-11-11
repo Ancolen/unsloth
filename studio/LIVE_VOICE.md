@@ -561,7 +561,10 @@ needs no extra dependency and is the default until those assets are present.
 (`smart_turn` or `silence`) in `capabilities`, and the Settings -> Voice block
 shows the same values so a degraded setup is visible before a session starts.
 
-Download flow:
+**Planned download flow (Phase 4; not implemented yet).** Today the local
+engine choice is env-based and the XTTS checkpoint downloads directly with
+`huggingface_hub` on first use; the rest of the stack reuses Studio's existing
+STT/TTS/chat model pages.
 
 - Use Studio's existing HF hub/download manager (queue, progress, cancel, checksum).
 - `LiveModelCatalog` entries carry role, repo, revision, files, size, license,
