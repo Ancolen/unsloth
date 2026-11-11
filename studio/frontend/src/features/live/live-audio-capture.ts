@@ -219,6 +219,9 @@ export class LiveAudioCapture {
 
   setEnabled(enabled: boolean): void {
     this.enabled = enabled;
+    for (const track of this.stream?.getAudioTracks() ?? []) {
+      track.enabled = enabled;
+    }
     if (enabled) {
       this.pending = new Float32Array(0);
     }
