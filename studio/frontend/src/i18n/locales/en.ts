@@ -5756,6 +5756,8 @@ export const en = {
     screenPreview: "Screen preview",
     hint: "Speak naturally; the assistant will answer aloud.",
     echoWarning: "Headphones are recommended for barge-in.",
+    screenCloudBlocked:
+      "The screen frame was not sent to a cloud provider. Enable cloud screen sharing in Settings → Voice.",
     dismissError: "Dismiss error",
     states: {
       idle: "Idle",
@@ -5794,6 +5796,7 @@ export const en = {
         "Screen sharing is available in Unsloth Desktop on Linux.",
       attachScreenCloud:
         "Screen frames are sent to the selected chat model, including cloud providers.",
+      allowCloudScreen: "Allow sending screen frames to cloud providers",
       sttEngine: "STT engine",
       ttsEngine: "TTS engine",
       screenBackend: "Screen backend",

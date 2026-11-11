@@ -67,6 +67,7 @@ export const LiveBar: FC = () => {
   const screenStarting = useLiveStore((state) => state.screenStarting);
   const screenPaused = useLiveStore((state) => state.screenPaused);
   const screenFrame = useLiveStore((state) => state.screenFrame);
+  const screenCloudBlocked = useLiveStore((state) => state.screenCloudBlocked);
   const error = useLiveStore((state) => state.error);
   const echoCancellation = useLiveStore((state) => state.echoCancellation);
   const screenSupported = liveScreenSupported();
@@ -230,6 +231,11 @@ export const LiveBar: FC = () => {
           </span>
         ) : null}
       </div>
+      {screenCloudBlocked ? (
+        <p className="pl-4 text-[10px] text-amber-600 dark:text-amber-400">
+          {t("live.screenCloudBlocked")}
+        </p>
+      ) : null}
       {error ? (
         <div
           className="flex items-start gap-2 rounded-xl bg-destructive/10 px-2.5 py-1.5 text-xs text-destructive"

@@ -42,6 +42,7 @@ export interface LiveBridge {
   restoreDraft: (draft: string) => void;
   isRunActive: () => boolean;
   currentAssistantMessageId: () => string | null;
+  isCloudModel: () => boolean;
 }
 
 const PROTOCOL_VERSION = 1;
@@ -117,7 +118,7 @@ class LiveController {
     store.setScreenStarting(false);
     store.setScreenPaused(false);
     store.setScreenFrame(null);
-    store.setScreenPaused(false);
+    store.setScreenCloudBlocked(false);
     this.liveTurnSent = false;
     try {
       const status = await this.ensureStatus(true);
@@ -527,11 +528,13 @@ class LiveController {
       this.pendingTranscript = clean;
       return;
     }
+    const state = useLiveStore.getState();
+    const wantsScreen = state.screenActive && state.attachScreen;
+    const cloud = this.bridge?.isCloudModel() ?? false;
+    const cloudBlocked = wantsScreen && cloud && !state.allowCloudScreen;
+    state.setScreenCloudBlocked(cloudBlocked);
     let attachment: File | null = null;
-    if (
-      useLiveStore.getState().screenActive &&
-      useLiveStore.getState().attachScreen
-    ) {
+    if (wantsScreen && !cloudBlocked) {
       try {
         const frame = this.lastScreenFrame ?? (await latestLiveScreenFrame());
         if (frame) {
@@ -691,6 +694,7 @@ class LiveController {
     useLiveStore.getState().setScreenActive(false);
     useLiveStore.getState().setScreenStarting(false);
     useLiveStore.getState().setScreenFrame(null);
+    useLiveStore.getState().setScreenCloudBlocked(false);
     this.assistantMessageId = null;
     this.baselineAssistantId = null;
     this.liveTurnSent = false;

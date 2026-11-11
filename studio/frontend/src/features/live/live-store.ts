@@ -12,6 +12,7 @@ interface LiveSettings {
   ttsModel: string;
   voice: string;
   attachScreen: boolean;
+  allowCloudScreen: boolean;
   interruptWhileThinking: boolean;
   endpointFastMs: number;
   endpointExtendedMs: number;
@@ -31,6 +32,7 @@ interface LiveRuntime {
   screenStarting: boolean;
   screenPaused: boolean;
   screenFrame: string | null;
+  screenCloudBlocked: boolean;
   modelsReady: boolean;
   echoCancellation: boolean;
   status: LiveStatus | null;
@@ -50,6 +52,7 @@ export interface LiveStore extends LiveRuntime, LiveSettings {
   setScreenStarting: (starting: boolean) => void;
   setScreenPaused: (paused: boolean) => void;
   setScreenFrame: (frame: string | null) => void;
+  setScreenCloudBlocked: (blocked: boolean) => void;
   setModelsReady: (ready: boolean) => void;
   setEchoCancellation: (supported: boolean) => void;
   setMode: (mode: LiveMode) => void;
@@ -58,6 +61,7 @@ export interface LiveStore extends LiveRuntime, LiveSettings {
   setTtsModel: (model: string) => void;
   setVoice: (voice: string) => void;
   setAttachScreen: (attach: boolean) => void;
+  setAllowCloudScreen: (allow: boolean) => void;
   setInterruptWhileThinking: (interrupt: boolean) => void;
   setEndpointFastMs: (ms: number) => void;
   setEndpointExtendedMs: (ms: number) => void;
@@ -78,6 +82,7 @@ const initialRuntime: LiveRuntime = {
   screenStarting: false,
   screenPaused: false,
   screenFrame: null,
+  screenCloudBlocked: false,
   modelsReady: false,
   echoCancellation: false,
   status: null,
@@ -90,6 +95,7 @@ const initialSettings: LiveSettings = {
   ttsModel: "",
   voice: "",
   attachScreen: false,
+  allowCloudScreen: false,
   interruptWhileThinking: false,
   endpointFastMs: 300,
   endpointExtendedMs: 900,
@@ -118,6 +124,7 @@ export const useLiveStore = create<LiveStore>()(
       setScreenStarting: (screenStarting) => set({ screenStarting }),
       setScreenPaused: (screenPaused) => set({ screenPaused }),
       setScreenFrame: (screenFrame) => set({ screenFrame }),
+      setScreenCloudBlocked: (screenCloudBlocked) => set({ screenCloudBlocked }),
       setModelsReady: (modelsReady) => set({ modelsReady }),
       setEchoCancellation: (echoCancellation) => set({ echoCancellation }),
       setMode: (mode) => set({ mode }),
@@ -126,6 +133,7 @@ export const useLiveStore = create<LiveStore>()(
       setTtsModel: (ttsModel) => set({ ttsModel }),
       setVoice: (voice) => set({ voice }),
       setAttachScreen: (attachScreen) => set({ attachScreen }),
+      setAllowCloudScreen: (allowCloudScreen) => set({ allowCloudScreen }),
       setInterruptWhileThinking: (interruptWhileThinking) =>
         set({ interruptWhileThinking }),
       setEndpointFastMs: (endpointFastMs) => set({ endpointFastMs }),
@@ -149,6 +157,7 @@ export const useLiveStore = create<LiveStore>()(
         ttsModel: state.ttsModel,
         voice: state.voice,
         attachScreen: state.attachScreen,
+        allowCloudScreen: state.allowCloudScreen,
         interruptWhileThinking: state.interruptWhileThinking,
         endpointFastMs: state.endpointFastMs,
         endpointExtendedMs: state.endpointExtendedMs,

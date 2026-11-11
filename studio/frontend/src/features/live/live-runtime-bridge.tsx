@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright 2026-present the Unsloth AI Inc. team. All rights reserved. See /studio/LICENSE.AGPL-3.0
 
-import { useChatActive } from "@/features/chat";
+import {
+  isExternalModelId,
+  useChatActive,
+  useChatRuntimeStore,
+} from "@/features/chat";
 import { toast } from "@/lib/toast";
 import { useAui, useAuiState } from "@assistant-ui/react";
 import { type FC, useEffect, useRef } from "react";
@@ -85,6 +89,12 @@ export const LiveRuntimeBridge: FC = () => {
       },
       isRunActive: () => aui.thread().getState().isRunning,
       currentAssistantMessageId: () => assistantIdRef.current,
+      // External providers may be a local gateway; treating every one as a
+      // cloud upload is the fail-closed choice for screen frames.
+      isCloudModel: () =>
+        isExternalModelId(
+          useChatRuntimeStore.getState().params.checkpoint,
+        ),
     });
   }, [aui, chatActive]);
 

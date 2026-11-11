@@ -6110,6 +6110,8 @@ export const tr = {
     screenPreview: "Ekran önizlemesi",
     hint: "Doğal konuşun; asistan sesli yanıtlar.",
     echoWarning: "Kesintili mod için kulaklık önerilir.",
+    screenCloudBlocked:
+      "Ekran karesi bulut sağlayıcısına gönderilmedi. Ayarlar → Ses bölümünden bulut ekran paylaşımını açın.",
     dismissError: "Hatayı kapat",
     states: {
       idle: "Boşta",
@@ -6148,6 +6150,7 @@ export const tr = {
         "Ekran paylaşımı Linux'ta Unsloth Desktop ile kullanılabilir.",
       attachScreenCloud:
         "Ekran kareleri seçili sohbet modeline, bulut sağlayıcıları dahil, gönderilir.",
+      allowCloudScreen: "Ekran karelerinin bulut sağlayıcılarına gönderilmesine izin ver",
       sttEngine: "STT motoru",
       ttsEngine: "TTS motoru",
       screenBackend: "Ekran arka ucu",

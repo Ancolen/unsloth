@@ -26,6 +26,7 @@ export const LiveSettings: FC = () => {
   const mode = useLiveStore((state) => state.mode);
   const language = useLiveStore((state) => state.language);
   const attachScreen = useLiveStore((state) => state.attachScreen);
+  const allowCloudScreen = useLiveStore((state) => state.allowCloudScreen);
   const interruptWhileThinking = useLiveStore(
     (state) => state.interruptWhileThinking,
   );
@@ -176,9 +177,23 @@ export const LiveSettings: FC = () => {
         </p>
       )}
       {attachScreen ? (
-        <p className="text-xs text-amber-600 dark:text-amber-400">
-          {t("live.settings.attachScreenCloud")}
-        </p>
+        <>
+          <p className="text-xs text-amber-600 dark:text-amber-400">
+            {t("live.settings.attachScreenCloud")}
+          </p>
+          <label className="flex items-center justify-between gap-4 text-sm">
+            <span>{t("live.settings.allowCloudScreen")}</span>
+            <input
+              type="checkbox"
+              checked={allowCloudScreen}
+              onChange={(event) =>
+                useLiveStore
+                  .getState()
+                  .setAllowCloudScreen(event.target.checked)
+              }
+            />
+          </label>
+        </>
       ) : null}
       <p className="text-xs text-muted-foreground">
         {t("live.settings.reuseHint")}

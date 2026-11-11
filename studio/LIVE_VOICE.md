@@ -26,6 +26,9 @@ Feature flag: `UNSLOTH_STUDIO_LIVE_VOICE` (default on; set `0` to disable)
 - Accessibility: the live bar is a labeled region with polite state/transcript
   announcements, `role="alert"` errors, pressed-state toggles and translated
   language names instead of raw codes.
+- Screen consent: with an external chat provider selected, a screen frame is
+  attached only after the explicit cloud-screen checkbox is enabled; otherwise
+  the turn is sent without the image and the live bar explains why.
 - Pending: automatic detector download on first run (the manual install is
   implemented), a model-picker UI for the local engines (they are env-selected
   today), partial transcripts, and Phase 5 hardening.
@@ -208,6 +211,13 @@ studio/backend/core/live/
 ```python
 app.include_router(live_router, prefix="/api/live", tags=["live"])
 ```
+
+HTTP endpoints:
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /api/live/status` | Feature flag, detector/runtime capabilities and pinned asset states |
+| `POST /api/live/assets/{role}/download` | Download and SHA-256-verify one pinned detector (`vad` or `endpoint`) |
 
 ### 5.2 WebSocket protocol
 
@@ -452,8 +462,10 @@ SPEAKING + barge_in -> INTERRUPTED -> LISTENING
 - If the chat model is not loaded, the Live button prompts to load one. If screen
   sharing is on and the model has no vision input, `VisionImageAdapter` rejects the
   attachment; show an actionable error and send text only or offer a vision model.
-- External providers: frame upload requires `allow_cloud_screen`; otherwise attach
-  nothing and show a badge.
+- External providers: frame upload requires the `allowCloudScreen` setting;
+  otherwise the frame is not attached and the bar shows the blocked notice.
+  Every external provider is treated as cloud (fail closed), even a local
+  OpenAI-compatible gateway.
 
 ### 6.6 Screen sharing (frontend)
 
