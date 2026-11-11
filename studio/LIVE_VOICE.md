@@ -13,11 +13,16 @@ Feature flag: `UNSLOTH_STUDIO_LIVE_VOICE=1`
   streamed sentence TTS and the assistant-ui bridge are implemented.
 - Linux screen capture is implemented with xdg-desktop-portal ScreenCast +
   `OpenPipeWireRemote` + GStreamer (`pipewiresrc ! videorate ! videoscale ! jpegenc`),
-  including the restore token, a latest-frame ring buffer and pause/stop. It still
-  needs hardware-in-the-loop validation on GNOME Wayland and installer/packaging
-  checks.
-- Pending: Silero/Smart Turn asset auto-download, the Live model catalog/settings
-  UI, partial transcripts, and Phase 5 hardening.
+  including the restore token, a latest-frame ring buffer, aspect-preserving
+  scaling and pause/stop. The portal session and GStreamer encode path have local
+  smoke tests; the interactive picker still needs a human GNOME Wayland run, and
+  the AppImage packaging needs a release-build check.
+- Local voices: optional Piper and XTTS-v2 adapters are implemented behind
+  `UNSLOTH_LIVE_TTS=piper|xtts`; both return WAV per sentence. XTTS downloads its
+  pinned checkpoint from Hugging Face after an explicit CPML acceptance flag.
+- Pending: Silero/Smart Turn asset auto-download, a model-picker UI for the
+  local engines (they are env-selected today), partial transcripts, and Phase 5
+  hardening.
 
 ## 1. Goal
 
