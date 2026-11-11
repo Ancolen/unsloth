@@ -755,6 +755,31 @@ mod imp {
         }
 
         #[test]
+        #[ignore = "requires the xdg-desktop-portal ScreenCast interface"]
+        fn portal_creates_and_closes_a_screencast_session() {
+            let runtime = tokio::runtime::Runtime::new().expect("tokio runtime");
+            runtime.block_on(async {
+                let proxy = Screencast::new().await.expect("ScreenCast portal");
+                let session = proxy
+                    .create_session(Default::default())
+                    .await
+                    .expect("portal session");
+                proxy
+                    .select_sources(
+                        &session,
+                        SelectSourcesOptions::default()
+                            .set_sources(SourceType::MONITOR | SourceType::WINDOW)
+                            .set_multiple(false)
+                            .set_cursor_mode(CursorMode::EMBEDDED)
+                            .set_persist_mode(PersistMode::ExplicitlyRevoked),
+                    )
+                    .await
+                    .expect("source selection");
+                session.close().await.expect("session close");
+            });
+        }
+
+        #[test]
         #[ignore = "requires the GStreamer video and JPEG plugins"]
         fn gstreamer_pipeline_encodes_jpeg_frames() {
             let _guard = TEST_LOCK.lock().expect("test lock");
