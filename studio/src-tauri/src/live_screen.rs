@@ -412,8 +412,7 @@ mod imp {
                 Err(RecvTimeoutError::Disconnected) => break,
             }
 
-            let mut failed = false;
-            while let Some(message) =
+            if let Some(message) =
                 bus.pop_filtered(&[gst::MessageType::Error, gst::MessageType::Eos])
             {
                 let text = match message.view() {
@@ -428,10 +427,6 @@ mod imp {
                     _ => "The screen stream ended.".to_string(),
                 };
                 mark_error(generation, text);
-                failed = true;
-                break;
-            }
-            if failed {
                 break;
             }
         }
