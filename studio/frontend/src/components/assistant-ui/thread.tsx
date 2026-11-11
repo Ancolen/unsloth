@@ -3019,6 +3019,7 @@ const Composer: FC<{
   const aui = useAui();
   const isDictating = useAuiState((s) => s.composer.dictation != null);
   const isLiveActive = useLiveStore((s) => s.active);
+  const liveError = useLiveStore((s) => s.error);
   const pageDragging = useContext(PageDragContext);
   const nativeDragging = useContext(NativeAttachmentDragContext);
   const { overlay, closeOverlay } = useGeneratedImageOverlay();
@@ -6004,14 +6005,17 @@ const Composer: FC<{
         </div>
         {isLiveActive ? (
           <LiveBar />
-        ) : isDictating ? (
-          <ChatDictationBar
-            onSend={sendAfterDictation}
-            // Every state handleSubmit would reject after transcription; text comes from the transcript.
-            sendDisabled={dictationBlocked}
-          />
         ) : (
           <>
+            {liveError ? <LiveBar /> : null}
+            {isDictating ? (
+              <ChatDictationBar
+                onSend={sendAfterDictation}
+                // Every state handleSubmit would reject after transcription; text comes from the transcript.
+                sendDisabled={dictationBlocked}
+              />
+            ) : (
+              <>
             <div
               ref={editorRef}
               className="unsloth-composer-editor"
@@ -6117,6 +6121,8 @@ const Composer: FC<{
               menuSide={effectiveMenuSide}
               queueThreadIds={promptQueueThreadIds}
             />
+              </>
+            )}
           </>
         )}
       </div>
