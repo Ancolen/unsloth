@@ -372,7 +372,7 @@ If the chat model is larger, move STT/TTS to CPU and show a fit warning.
 
 ### 5.7 Security
 
-- UI session only; API keys cannot open a live session.
+- UI session only; API keys and keyless callers cannot open a live session.
 - Origin checked; remote/LAN access disabled by default.
 - Raw audio is never written to disk. Only transcripts become chat messages.
 - Screen frames become chat attachments only when the user sends them. Cloud frame
