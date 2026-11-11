@@ -6172,7 +6172,7 @@ export const tr = {
       autoDownloadAssets:
         "Canlı ses başlarken eksik algılama modellerini otomatik indir",
       onnxRuntimeMissing:
-        "Studio'nun Python ortamında onnxruntime kurulu değil; algılama modelleri etkinleşmez ve Canlı ses enerji VAD'ı ile sessizlik zaman aşımını kullanır.",
+        "Studio'nun Python ortamında onnxruntime kurulu değil; algılama modelleri etkinleşmez ve Canlı ses enerji VAD'ı ile sessizlik zaman aşımını kullanır. Etkinleştirmek için pip install onnxruntime çalıştırın.",
       checking: "Kontrol ediliyor…",
       unknown: "Bilinmiyor",
       fakeEngineWarning:

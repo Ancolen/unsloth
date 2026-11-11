@@ -5818,7 +5818,7 @@ export const en = {
       autoDownloadAssets:
         "Download missing detector models automatically when Live starts",
       onnxRuntimeMissing:
-        "onnxruntime is not installed in Studio's Python environment, so the detector models stay inactive; Live uses the energy VAD and silence timeout.",
+        "onnxruntime is not installed in Studio's Python environment, so the detector models stay inactive and Live uses the energy VAD and silence timeout. Install it with pip install onnxruntime to activate them.",
       checking: "Checking…",
       unknown: "Unknown",
       fakeEngineWarning:

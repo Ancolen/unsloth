@@ -315,11 +315,12 @@ The frontend converts streamed assistant text into sentences and sends `speak`
 messages. The backend:
 
 - keeps a sentence queue keyed by `id`/`seq`,
-- synthesizes the first sentence immediately,
-- prefetches the next sentence while the current one plays,
-- cancels queued and in-flight work on `tts_cancel` (audio.cpp exposes
-  `cancel_event`; Piper/XTTS are aborted between sentences),
-- sends complete WAV payloads as binary WebSocket messages.
+- synthesizes queued sentences sequentially and sends each complete WAV as a
+  binary message; the frontend schedules the next clip while the current one
+  plays, so playback is gapless even though synthesis is serial,
+- cancels queued work and discards an in-flight result on `tts_cancel`
+  (audio.cpp exposes `cancel_event`; Piper/XTTS finish or return between
+  sentences).
 
 When a sentence is synthesized through Studio's `/v1/audio/speech`, `AsgiTts`
 sends `X-Unsloth-Live-Voice: 1`; the route skips the audio-gallery save and the
