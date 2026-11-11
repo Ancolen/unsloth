@@ -560,7 +560,7 @@ class LiveController {
 
   private async sendTranscript(text: string): Promise<void> {
     const clean = text.trim();
-    if (!clean) {
+    if (!clean || !useLiveStore.getState().active) {
       return;
     }
     const bridge = this.bridge;
@@ -588,6 +588,9 @@ class LiveController {
       } catch {
         attachment = null;
       }
+    }
+    if (!useLiveStore.getState().active) {
+      return;
     }
     this.liveTurnSent = true;
     useLiveStore.getState().setState("thinking");
