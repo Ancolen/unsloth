@@ -3,7 +3,7 @@
 Status: design + implementation plan
 Owner: Ancolen
 Target: Unsloth Desktop (Linux first), Studio web UI where possible
-Feature flag: `UNSLOTH_STUDIO_LIVE_VOICE=1`
+Feature flag: `UNSLOTH_STUDIO_LIVE_VOICE` (default on; set `0` to disable)
 
 **Implementation status (2026-11-12):**
 
@@ -536,6 +536,7 @@ Environment overrides (all optional):
 | `UNSLOTH_LIVE_XTTS_SPEAKER` | Built-in XTTS speaker (default `Asya Anara`) or a reference WAV path |
 | `UNSLOTH_LIVE_XTTS_LANGUAGE` | XTTS language code (default `tr`) |
 | `UNSLOTH_LIVE_XTTS_DEVICE` | `auto`, `cpu`, `cuda` or `gpu:N` |
+| `UNSLOTH_LIVE_XTTS_DETERMINISTIC=1` | Disable sampling for reproducible prosody (benchmarks) |
 | `UNSLOTH_LIVE_XTTS_ACCEPT_LICENSE=1` | Explicitly accept the CPML non-commercial license |
 | `UNSLOTH_LIVE_VAD_MODEL` | Silero VAD ONNX path; falls back to the energy VAD |
 | `UNSLOTH_LIVE_SMART_TURN_MODEL` | Smart Turn ONNX path; falls back to 900 ms extended endpointing |
