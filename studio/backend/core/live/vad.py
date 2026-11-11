@@ -141,8 +141,9 @@ class SileroVad:
 
     def reset(self) -> None:
         self.fallback.reset()
+        # Keep the ONNX session: reset only clears the recurrent state.  Forcing
+        # a reload here recreated the session at every utterance boundary.
         self._state = None
-        self._load_attempted = False
 
     def process(self, pcm: bytes, sample_rate: int = audio.SAMPLE_RATE) -> VadFrame:
         self._load()

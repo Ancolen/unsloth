@@ -25,7 +25,7 @@ from core.live.protocol import (
 from core.live.session import LiveConfig, LiveSession
 from core.live.stt import FakeStt
 from core.live.tts import PiperTts, TtsError, ToneTts
-from core.live.vad import EnergyVad
+from core.live.vad import EnergyVad, SileroVad
 from core.live.xtts import XttsTts
 
 
@@ -148,6 +148,39 @@ def test_protocol_rejects_bad_json_and_bad_hello() -> None:
     message = parse_client_message(json.dumps({"type": "hello", "protocol": 99}))
     assert message is not None
     assert "Unsupported live protocol" in validate_hello(message)
+
+
+def test_silero_vad_reuses_its_session_across_resets(tmp_path, monkeypatch) -> None:
+    import sys
+    import types
+
+    import numpy as np
+
+    model_path = tmp_path / "silero_vad.onnx"
+    model_path.write_bytes(b"fake-onnx")
+    created: list[str] = []
+
+    class _Session:
+        def __init__(self, *_args, **_kwargs) -> None:
+            created.append("session")
+
+        def run(self, _outputs, feeds):
+            return [np.array([[0.9]], dtype = np.float32), feeds["state"]]
+
+    fake = types.ModuleType("onnxruntime")
+    fake.SessionOptions = lambda: SimpleNamespace(
+        inter_op_num_threads = 1,
+        intra_op_num_threads = 1,
+    )
+    fake.InferenceSession = _Session
+    monkeypatch.setitem(sys.modules, "onnxruntime", fake)
+
+    vad = SileroVad(model_path = model_path, threshold = 0.5)
+    frame = audio.speech_like_pcm(32)
+    assert vad.process(frame).is_speech is True
+    vad.reset()
+    assert vad.process(frame).is_speech is True
+    assert created == ["session"]
 
 
 def test_energy_vad_opens_and_releases() -> None:
