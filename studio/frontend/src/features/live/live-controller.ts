@@ -281,8 +281,8 @@ class LiveController {
   setMuted(muted: boolean): void {
     const store = useLiveStore.getState();
     store.setMuted(muted);
+    // This is the microphone mute control; the assistant's playback stays audible.
     this.capture.setEnabled(!muted);
-    this.player.setMuted(muted);
     this.socket.sendJson({ type: "mute", muted });
   }
 
