@@ -24996,6 +24996,9 @@ async def openai_audio_speech(
         "1",
         "true",
     )
+    if live_voice:
+        # Per-sentence clips are internal to the live socket, not user API activity.
+        request.state.skip_api_monitor = True
     # Neither path streams, a saved connection included.
     if body.stream_format == "sse":
         _raise_unsupported_openai_parameter(

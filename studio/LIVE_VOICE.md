@@ -299,8 +299,9 @@ messages. The backend:
 - sends complete WAV payloads as binary WebSocket messages.
 
 When a sentence is synthesized through Studio's `/v1/audio/speech`, `AsgiTts`
-sends `X-Unsloth-Live-Voice: 1`; the route skips the audio-gallery save for that
-request so a long conversation cannot evict the user's saved clips.
+sends `X-Unsloth-Live-Voice: 1`; the route skips the audio-gallery save and the
+per-request API monitor row for that request, so a long conversation cannot
+evict the user's saved clips or flood the activity list.
 
 Engines:
 
