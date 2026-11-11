@@ -28,6 +28,24 @@ export const LiveSettings: FC = () => {
   const screenSupported = liveScreenSupported();
   const fakeEngine =
     status?.capabilities.stt === "fake" || status?.capabilities.tts === "fake";
+  const detectorLabel = (value: string | undefined): string => {
+    if (!status) {
+      return t("live.settings.checking");
+    }
+    if (value === "silero") {
+      return t("live.settings.vadSilero");
+    }
+    if (value === "energy") {
+      return t("live.settings.vadEnergy");
+    }
+    if (value === "smart_turn") {
+      return t("live.settings.endpointSmartTurn");
+    }
+    if (value === "silence") {
+      return t("live.settings.endpointSilence");
+    }
+    return value || t("live.settings.unknown");
+  };
 
   useEffect(() => {
     void liveController.ensureStatus();
@@ -66,6 +84,12 @@ export const LiveSettings: FC = () => {
             ? status?.capabilities.screenCapture || t("live.settings.unknown")
             : t("live.settings.screenDesktopOnly")}
         </span>
+        <span className="text-muted-foreground">{t("live.settings.vad")}</span>
+        <span>{detectorLabel(status?.capabilities.vad)}</span>
+        <span className="text-muted-foreground">
+          {t("live.settings.endpoint")}
+        </span>
+        <span>{detectorLabel(status?.capabilities.endpoint)}</span>
       </div>
 
       {fakeEngine ? (

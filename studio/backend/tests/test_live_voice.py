@@ -12,6 +12,7 @@ from typing import Any
 
 from core.live import audio
 from core.live.endpoint import EndpointConfig, EndpointDetector
+from core.live.models import status as live_status
 from core.live.protocol import (
     PROTOCOL_VERSION,
     parse_client_message,
@@ -27,6 +28,14 @@ from core.live.xtts import XttsTts
 def _frame_for(ms: int, speech: bool) -> bytes:
     pcm = audio.speech_like_pcm(ms) if speech else audio.silence_pcm(ms)
     return pcm
+
+
+def test_status_reports_detector_fallbacks(monkeypatch) -> None:
+    monkeypatch.delenv("UNSLOTH_LIVE_VAD_MODEL", raising = False)
+    monkeypatch.delenv("UNSLOTH_LIVE_SMART_TURN_MODEL", raising = False)
+    capabilities = live_status().to_dict()["capabilities"]
+    assert capabilities["vad"] == "energy"
+    assert capabilities["endpoint"] == "silence"
 
 
 def test_protocol_parses_and_validates_hello() -> None:

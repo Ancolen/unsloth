@@ -6141,6 +6141,12 @@ export const tr = {
       sttEngine: "STT motoru",
       ttsEngine: "TTS motoru",
       screenBackend: "Ekran arka ucu",
+      vad: "Ses algılama",
+      endpoint: "Tur bitişi",
+      vadSilero: "Silero VAD",
+      vadEnergy: "Enerji yedeği",
+      endpointSmartTurn: "Smart Turn",
+      endpointSilence: "Sessizlik süresi",
       checking: "Kontrol ediliyor…",
       unknown: "Bilinmiyor",
       fakeEngineWarning:

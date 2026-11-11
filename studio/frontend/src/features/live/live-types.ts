@@ -20,6 +20,8 @@ export interface LiveCapabilities {
   screenCapture?: string;
   stt?: string;
   tts?: string;
+  vad?: string;
+  endpoint?: string;
 }
 
 export interface LiveAssetStatus {

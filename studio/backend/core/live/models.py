@@ -14,7 +14,8 @@ from __future__ import annotations
 import os
 import platform
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
+from pathlib import Path
 from typing import Any, Optional
 
 from core.live.protocol import PROTOCOL_VERSION, SAMPLE_RATE
@@ -83,6 +84,17 @@ LIVE_ASSETS: tuple[LiveAsset, ...] = (
 )
 
 
+def _asset_installed(asset: LiveAsset) -> bool:
+    value = os.environ.get(asset.env_override, "").strip()
+    return bool(value) and Path(value).expanduser().is_file()
+
+
+def _assets() -> tuple[LiveAsset, ...]:
+    return tuple(
+        replace(asset, installed = _asset_installed(asset)) for asset in LIVE_ASSETS
+    )
+
+
 @dataclass(frozen = True)
 class LiveStatus:
     enabled: bool
@@ -95,6 +107,7 @@ class LiveStatus:
     assets: tuple[LiveAsset, ...] = field(default_factory = tuple)
 
     def to_dict(self) -> dict[str, Any]:
+        by_role = {asset.role: asset for asset in self.assets}
         return {
             "enabled": self.enabled,
             "protocol": self.protocol,
@@ -105,6 +118,17 @@ class LiveStatus:
                 "screenCapture": self.screen_capture,
                 "stt": self.stt_engine,
                 "tts": self.tts_engine,
+                "vad": (
+                    "silero"
+                    if by_role.get("vad") is not None and by_role["vad"].installed
+                    else "energy"
+                ),
+                "endpoint": (
+                    "smart_turn"
+                    if by_role.get("endpoint") is not None
+                    and by_role["endpoint"].installed
+                    else "silence"
+                ),
             },
             "assets": [asset.to_dict() for asset in self.assets],
         }
@@ -119,5 +143,5 @@ def status() -> LiveStatus:
         screen_capture = "tauri" if screen_capture_supported() else "unsupported",
         stt_engine = _engine_kind("UNSLOTH_LIVE_STT"),
         tts_engine = _engine_kind("UNSLOTH_LIVE_TTS"),
-        assets = LIVE_ASSETS,
+        assets = _assets(),
     )

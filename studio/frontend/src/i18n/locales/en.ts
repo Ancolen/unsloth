@@ -5787,6 +5787,12 @@ export const en = {
       sttEngine: "STT engine",
       ttsEngine: "TTS engine",
       screenBackend: "Screen backend",
+      vad: "Voice detection",
+      endpoint: "Turn endpoint",
+      vadSilero: "Silero VAD",
+      vadEnergy: "Energy fallback",
+      endpointSmartTurn: "Smart Turn",
+      endpointSilence: "Silence timeout",
       checking: "Checking…",
       unknown: "Unknown",
       fakeEngineWarning:

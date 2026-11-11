@@ -550,6 +550,9 @@ frontend player do not change.
 
 Silero VAD and Smart Turn remain optional `onnxruntime` assets; the energy VAD
 needs no extra dependency and is the default until those assets are present.
+`/api/live/status` reports the active VAD (`silero` or `energy`) and endpoint
+(`smart_turn` or `silence`) in `capabilities`, and the Settings -> Voice block
+shows the same values so a degraded setup is visible before a session starts.
 
 Download flow:
 
