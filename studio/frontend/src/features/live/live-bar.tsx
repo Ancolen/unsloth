@@ -129,7 +129,11 @@ export const LiveBar: FC = () => {
             }
           >
             <span className="px-1 text-[10px] font-semibold uppercase tracking-wide">
-              {mode === "barge_in" ? "DUO" : "TURN"}
+              {t(
+                mode === "barge_in"
+                  ? "live.mode.bargeInShort"
+                  : "live.mode.turnShort",
+              )}
             </span>
           </TooltipIconButton>
           {screenSupported ? (

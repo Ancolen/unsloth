@@ -3,7 +3,7 @@
 
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
-import type { FC } from "react";
+import { type FC, useEffect } from "react";
 import { liveController } from "./live-controller";
 import { liveScreenSupported } from "./live-screen";
 import { useLiveStore } from "./live-store";
@@ -24,7 +24,14 @@ export const LiveSettings: FC = () => {
   );
   const echoCancellation = useLiveStore((state) => state.echoCancellation);
   const enabled = useLiveStore((state) => state.enabled);
+  const status = useLiveStore((state) => state.status);
   const screenSupported = liveScreenSupported();
+  const fakeEngine =
+    status?.capabilities.stt === "fake" || status?.capabilities.tts === "fake";
+
+  useEffect(() => {
+    void liveController.ensureStatus();
+  }, []);
 
   return (
     <div className="flex flex-col gap-4">
@@ -33,6 +40,39 @@ export const LiveSettings: FC = () => {
           {enabled ? t("live.settings.enabled") : t("live.settings.disabled")}
         </span>
       </div>
+
+      <div className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-xs">
+        <span className="text-muted-foreground">
+          {t("live.settings.sttEngine")}
+        </span>
+        <span>
+          {status
+            ? status.capabilities.stt || t("live.settings.unknown")
+            : t("live.settings.checking")}
+        </span>
+        <span className="text-muted-foreground">
+          {t("live.settings.ttsEngine")}
+        </span>
+        <span>
+          {status
+            ? status.capabilities.tts || t("live.settings.unknown")
+            : t("live.settings.checking")}
+        </span>
+        <span className="text-muted-foreground">
+          {t("live.settings.screenBackend")}
+        </span>
+        <span>
+          {screenSupported
+            ? status?.capabilities.screenCapture || t("live.settings.unknown")
+            : t("live.settings.screenDesktopOnly")}
+        </span>
+      </div>
+
+      {fakeEngine ? (
+        <p className="text-xs text-amber-600 dark:text-amber-400">
+          {t("live.settings.fakeEngineWarning")}
+        </p>
+      ) : null}
 
       <div className="flex flex-wrap gap-2">
         <button

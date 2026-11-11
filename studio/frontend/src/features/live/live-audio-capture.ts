@@ -170,7 +170,7 @@ export class LiveAudioCapture {
       if (name === "NotFoundError" || name === "OverconstrainedError") {
         throw new LiveCaptureError(
           "no_device",
-          "No microphone matched the selected device. Pick another input in Settings → Live.",
+          "No microphone matched the selected device. Pick another input in Settings → Voice.",
         );
       }
       throw new LiveCaptureError(

@@ -5770,6 +5770,8 @@ export const en = {
     mode: {
       turn: "Turn-based",
       bargeIn: "Barge-in",
+      turnShort: "TURN",
+      bargeInShort: "DUO",
     },
     settings: {
       title: "Live voice",
@@ -5782,6 +5784,13 @@ export const en = {
         "Screen sharing is available in Unsloth Desktop on Linux.",
       attachScreenCloud:
         "Screen frames are sent to the selected chat model, including cloud providers.",
+      sttEngine: "STT engine",
+      ttsEngine: "TTS engine",
+      screenBackend: "Screen backend",
+      checking: "Checking…",
+      unknown: "Unknown",
+      fakeEngineWarning:
+        "A test engine is active. Install real STT/TTS models for production use.",
     },
   },
 } as const;

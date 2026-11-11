@@ -6124,6 +6124,8 @@ export const tr = {
     mode: {
       turn: "Sıralı",
       bargeIn: "Kesintili",
+      turnShort: "SIRALI",
+      bargeInShort: "ÇİFT",
     },
     settings: {
       title: "Canlı ses",
@@ -6136,6 +6138,13 @@ export const tr = {
         "Ekran paylaşımı Linux'ta Unsloth Desktop ile kullanılabilir.",
       attachScreenCloud:
         "Ekran kareleri seçili sohbet modeline, bulut sağlayıcıları dahil, gönderilir.",
+      sttEngine: "STT motoru",
+      ttsEngine: "TTS motoru",
+      screenBackend: "Ekran arka ucu",
+      checking: "Kontrol ediliyor…",
+      unknown: "Bilinmiyor",
+      fakeEngineWarning:
+        "Test motoru etkin. Üretim için gerçek STT/TTS modelleri kurun.",
     },
   },
 } satisfies DeepPartialMessageTree<typeof en>;
