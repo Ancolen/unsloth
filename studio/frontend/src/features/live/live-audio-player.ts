@@ -152,6 +152,9 @@ export class LiveAudioPlayer {
       );
     }
     for (const source of this.sources) {
+      // cancel() reports the finish itself; an onended callback arriving later
+      // must not report it a second time.
+      source.onended = null;
       try {
         source.stop();
       } catch {
