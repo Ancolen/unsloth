@@ -37,6 +37,8 @@ export const LiveSettings: FC = () => {
   const screenSupported = liveScreenSupported();
   const fakeEngine =
     status?.capabilities.stt === "fake" || status?.capabilities.tts === "fake";
+  const systemVoiceInactive =
+    ttsEngine === "system" && status?.capabilities.tts === "studio";
   const detectorLabel = (value: string | undefined): string => {
     if (!status) {
       return t("live.settings.checking");
@@ -109,7 +111,7 @@ export const LiveSettings: FC = () => {
           {t("live.settings.fakeEngineWarning")}
         </p>
       ) : null}
-      {ttsEngine === "system" ? (
+      {systemVoiceInactive ? (
         <p className="text-xs text-amber-600 dark:text-amber-400">
           {t("live.settings.systemTtsWarning")}
         </p>
