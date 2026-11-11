@@ -568,6 +568,8 @@ needs no extra dependency and is the default until those assets are present.
 `/api/live/status` reports the active VAD (`silero` or `energy`) and endpoint
 (`smart_turn` or `silence`) in `capabilities`, and the Settings -> Voice block
 shows the same values so a degraded setup is visible before a session starts.
+"Active" means the asset is installed *and* `onnxruntime` is importable; a model
+file alone does not claim Silero/Smart Turn while the engine would fall back.
 
 **Planned download flow (Phase 4; not implemented yet).** Today the local
 engine choice is env-based and the XTTS checkpoint downloads directly with

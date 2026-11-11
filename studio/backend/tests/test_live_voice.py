@@ -38,6 +38,31 @@ def test_status_reports_detector_fallbacks(monkeypatch) -> None:
     assert capabilities["endpoint"] == "silence"
 
 
+def test_status_only_claims_onnx_detectors_when_the_runtime_is_available(
+    tmp_path, monkeypatch
+) -> None:
+    vad_path = tmp_path / "vad.onnx"
+    turn_path = tmp_path / "turn.onnx"
+    vad_path.write_bytes(b"vad")
+    turn_path.write_bytes(b"turn")
+    monkeypatch.setenv("UNSLOTH_LIVE_VAD_MODEL", str(vad_path))
+    monkeypatch.setenv("UNSLOTH_LIVE_SMART_TURN_MODEL", str(turn_path))
+
+    import core.live.models as models
+
+    monkeypatch.setattr(models, "_onnxruntime_available", lambda: False)
+    degraded = live_status().to_dict()
+    assert degraded["capabilities"]["vad"] == "energy"
+    assert degraded["capabilities"]["endpoint"] == "silence"
+    assert all(asset["installed"] and not asset["active"] for asset in degraded["assets"])
+
+    monkeypatch.setattr(models, "_onnxruntime_available", lambda: True)
+    ready = live_status().to_dict()
+    assert ready["capabilities"]["vad"] == "silero"
+    assert ready["capabilities"]["endpoint"] == "smart_turn"
+    assert all(asset["active"] for asset in ready["assets"])
+
+
 def test_protocol_parses_and_validates_hello() -> None:
     message = parse_client_message(
         json.dumps(

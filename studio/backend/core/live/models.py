@@ -11,6 +11,7 @@ in one place.  Download actions reuse the existing Hugging Face pipeline.
 
 from __future__ import annotations
 
+import importlib.util
 import os
 import platform
 import sys
@@ -48,6 +49,7 @@ class LiveAsset:
     sha256: str = ""
     size_bytes: Optional[int] = None
     installed: bool = False
+    active: bool = False
     env_override: str = ""
 
     def to_dict(self) -> dict[str, Any]:
@@ -59,6 +61,7 @@ class LiveAsset:
             "sha256": self.sha256,
             "sizeBytes": self.size_bytes,
             "installed": self.installed,
+            "active": self.active,
             "envOverride": self.env_override,
         }
 
@@ -89,10 +92,27 @@ def _asset_installed(asset: LiveAsset) -> bool:
     return bool(value) and Path(value).expanduser().is_file()
 
 
+_onnxruntime: Optional[bool] = None
+
+
+def _onnxruntime_available() -> bool:
+    """An installed ONNX asset is inert without the runtime; report it honestly."""
+    global _onnxruntime
+    if _onnxruntime is None:
+        try:
+            _onnxruntime = importlib.util.find_spec("onnxruntime") is not None
+        except (ImportError, ValueError):
+            _onnxruntime = False
+    return _onnxruntime
+
+
 def _assets() -> tuple[LiveAsset, ...]:
-    return tuple(
-        replace(asset, installed = _asset_installed(asset)) for asset in LIVE_ASSETS
-    )
+    runtime = _onnxruntime_available()
+    resolved: list[LiveAsset] = []
+    for asset in LIVE_ASSETS:
+        installed = _asset_installed(asset)
+        resolved.append(replace(asset, installed = installed, active = installed and runtime))
+    return tuple(resolved)
 
 
 @dataclass(frozen = True)
@@ -120,13 +140,13 @@ class LiveStatus:
                 "tts": self.tts_engine,
                 "vad": (
                     "silero"
-                    if by_role.get("vad") is not None and by_role["vad"].installed
+                    if by_role.get("vad") is not None and by_role["vad"].active
                     else "energy"
                 ),
                 "endpoint": (
                     "smart_turn"
                     if by_role.get("endpoint") is not None
-                    and by_role["endpoint"].installed
+                    and by_role["endpoint"].active
                     else "silence"
                 ),
             },
