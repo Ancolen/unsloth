@@ -24988,8 +24988,14 @@ async def openai_audio_speech(
     With ``provider_id`` the request is proxied. Otherwise an omitted ``model`` serves the
     resident model. A named downloaded local model is loaded when auto-switch is on; when
     it is off, the shared switch guard rejects a different recognized local model.
-    A saved voice (``voice``) or ``reference`` clones; history keeps the clip as WAV."""
+    A saved voice (``voice``) or ``reference`` clones; history keeps the clip as WAV.
+    Live Voice sends ``X-Unsloth-Live-Voice: 1`` so its sentence clips are not added to
+    the user's audio gallery."""
     fmt = (body.response_format or "wav").strip().lower()
+    live_voice = (request.headers.get("x-unsloth-live-voice") or "").strip().lower() in (
+        "1",
+        "true",
+    )
     # Neither path streams, a saved connection included.
     if body.stream_format == "sse":
         _raise_unsupported_openai_parameter(
@@ -25080,7 +25086,11 @@ async def openai_audio_speech(
         }
         if run is not None:
             _, wav_bytes, sample_rate, model_name = await _speak(
-                run, request, current_subject, **tts_kwargs
+                run,
+                request,
+                current_subject,
+                persist = not live_voice,
+                **tts_kwargs,
             )
         else:
             wav_bytes, sample_rate, model_name, audio_type = await _generate_tts_wav(
@@ -25091,9 +25101,15 @@ async def openai_audio_speech(
                 voice = voice if isinstance(voice, str) else None,
                 **tts_kwargs,
             )
-            await asyncio.to_thread(
-                _persist_tts_clip, wav_bytes, sample_rate, body.input, model_name, audio_type
-            )
+            if not live_voice:
+                await asyncio.to_thread(
+                    _persist_tts_clip,
+                    wav_bytes,
+                    sample_rate,
+                    body.input,
+                    model_name,
+                    audio_type,
+                )
         api_monitor.relabel(monitor_id, model_name)
     if fmt == "wav":
         return Response(content = wav_bytes, media_type = "audio/wav")

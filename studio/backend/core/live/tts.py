@@ -301,7 +301,11 @@ class AsgiTts:
         selected_language = (language or self._language or "").strip()
         if selected_language:
             payload["language"] = selected_language
-        headers = {"Authorization": f"Bearer {self._token}"}
+        headers = {
+            "Authorization": f"Bearer {self._token}",
+            # Live sentences are ephemeral; do not fill the user's audio gallery.
+            "X-Unsloth-Live-Voice": "1",
+        }
         try:
             response = await self._client.post(
                 "/v1/audio/speech",

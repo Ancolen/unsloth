@@ -298,13 +298,17 @@ messages. The backend:
   `cancel_event`; Piper/XTTS are aborted between sentences),
 - sends complete WAV payloads as binary WebSocket messages.
 
+When a sentence is synthesized through Studio's `/v1/audio/speech`, `AsgiTts`
+sends `X-Unsloth-Live-Voice: 1`; the route skips the audio-gallery save for that
+request so a long conversation cannot evict the user's saved clips.
+
 Engines:
 
 | Engine | Default | Notes |
 |---|---|---|
-| Piper Turkish (`tr_TR-fettah-medium`) | yes | CPU, low latency, ~0 VRAM |
-| XTTS-v2 | optional | GPU, ~1.8 GB VRAM, CPML non-commercial license gate |
-| Studio audio.cpp models | optional | Kokoro/Piper EN/Qwen3-TTS/CosyVoice/IndexTTS2; test Turkish first |
+| Piper Turkish (`tr_TR-fettah-medium`) | opt-in | CPU, low latency, ~0 VRAM; `UNSLOTH_LIVE_TTS=piper` |
+| XTTS-v2 | opt-in | GPU, ~1.8 GB VRAM, CPML non-commercial license gate; `UNSLOTH_LIVE_TTS=xtts` |
+| Studio audio.cpp models | default | Kokoro/Piper EN/Qwen3-TTS/CosyVoice/IndexTTS2; test Turkish first |
 
 Text is cleaned in the frontend (`markdownToSpeechText`): code blocks are skipped,
 tool-call JSON and reasoning are never spoken. v1 uses WAV; Opus can follow.
