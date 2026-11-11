@@ -40,6 +40,10 @@ export class LiveAudioPlayer {
   private playing = false;
   private muted = false;
 
+  get isPlaying(): boolean {
+    return this.playing;
+  }
+
   setHandlers(handlers: LivePlayerHandlers): void {
     this.handlers = handlers;
   }
@@ -77,7 +81,16 @@ export class LiveAudioPlayer {
 
   async enqueue(wav: ArrayBuffer): Promise<void> {
     if (!(this.context && this.gain)) {
-      await this.prepare();
+      try {
+        await this.prepare();
+      } catch (error) {
+        this.handlers?.onError(
+          error instanceof Error
+            ? error.message
+            : "Could not start live audio playback.",
+        );
+        return;
+      }
     }
     const context = this.context;
     const gain = this.gain;

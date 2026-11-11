@@ -155,6 +155,18 @@ class LiveController {
         },
         onError: (message) => {
           useLiveStore.getState().setError(message);
+          // A decode/context failure can leave the backend believing audio is
+          // still playing.  If nothing is queued locally, close that window.
+          if (!this.player.isPlaying) {
+            const id = this.currentPlaybackId ?? this.pendingTtsId;
+            if (id) {
+              this.socket.sendJson({ type: "playback_finished", id });
+            }
+            const store = useLiveStore.getState();
+            if (store.state === "speaking") {
+              store.setState("listening");
+            }
+          }
         },
       });
       await this.player.prepare();
