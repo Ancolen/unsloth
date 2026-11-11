@@ -100,7 +100,7 @@ States:
 | State | UI | Notes |
 |---|---|---|
 | `setup` | Setup card | Missing STT/TTS models; download buttons |
-| `connecting` | Spinner | Mic permission, WebSocket, model warmup |
+| `connecting` | Spinner | Mic permission, detector assets, WebSocket |
 | `listening` | Waveform, "Listening" | VAD armed |
 | `speech` | Red dot, timer | User speaking |
 | `transcribing` | Spinner | Endpoint reached, STT in flight |
@@ -406,7 +406,7 @@ Small anchor edits:
 
 ```text
 IDLE
- -> CONNECTING (permission + WS + model warmup)
+ -> CONNECTING (permission + detector assets + WS)
  -> READY
  -> LISTENING
  -> SPEECH
@@ -493,7 +493,7 @@ live_screen_latest() -> { jpegBase64, width, height, timestampMs }
 live_screen_status() -> { active, paused, source, error }
 ```
 
-Registered in `generate_handler!` in `main.rs` (`~line 2501`).
+Registered in `generate_handler!` in `main.rs`.
 
 Pipeline:
 
