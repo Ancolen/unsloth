@@ -62,6 +62,7 @@ class LiveController {
   private token: string | null = null;
   private status: LiveStatus | null = null;
   private starting = false;
+  private startToken = 0;
   private savedDraft = "";
   private savedAutoRead: boolean | null = null;
   private assistantMessageId: string | null = null;
@@ -102,6 +103,7 @@ class LiveController {
     if (store.active || this.starting) {
       return;
     }
+    const startToken = ++this.startToken;
     this.starting = true;
     store.setError(null);
     store.setActive(true);
@@ -122,6 +124,9 @@ class LiveController {
       const token = getLiveToken();
       if (!token) {
         throw new Error("Sign in again before starting live voice.");
+      }
+      if (this.startCancelled(startToken)) {
+        return;
       }
       this.token = token;
       if (this.bridge) {
@@ -170,6 +175,10 @@ class LiveController {
         },
       });
       await this.player.prepare();
+      if (this.startCancelled(startToken)) {
+        this.player.dispose();
+        return;
+      }
 
       const settings = useLiveStore.getState();
       const voiceSettings = useVoiceSettingsStore.getState();
@@ -190,6 +199,11 @@ class LiveController {
       });
       this.echoCancellation = captureInfo.echoCancellation;
       useLiveStore.getState().setEchoCancellation(captureInfo.echoCancellation);
+      if (this.startCancelled(startToken)) {
+        this.capture.stop();
+        this.player.dispose();
+        return;
+      }
 
       this.socket.connect(token, {
         onOpen: () => {
@@ -235,8 +249,17 @@ class LiveController {
       this.starting = false;
     } catch (error) {
       this.starting = false;
+      if (this.startCancelled(startToken)) {
+        this.capture.stop();
+        this.player.dispose();
+        return;
+      }
       this.fail(errorMessage(error, "Could not start live voice."));
     }
+  }
+
+  private startCancelled(token: number): boolean {
+    return token !== this.startToken || !useLiveStore.getState().active;
   }
 
   stop(): void {
@@ -613,6 +636,8 @@ class LiveController {
   }
 
   private teardown(): void {
+    this.startToken += 1;
+    this.starting = false;
     this.socket.close();
     this.capture.stop();
     this.player.cancel();
