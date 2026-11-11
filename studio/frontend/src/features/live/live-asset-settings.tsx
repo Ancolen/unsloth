@@ -73,7 +73,7 @@ export const LiveAssetSettings = () => {
                 : ""}
             </div>
           </div>
-          {asset.active ? null : (
+          {asset.installed ? null : (
             <button
               type="button"
               className="shrink-0 rounded-full border border-border px-2.5 py-1 text-xs hover:bg-muted disabled:opacity-60"
