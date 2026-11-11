@@ -254,6 +254,7 @@ Server -> client:
 | `endpoint` | `{reason}` |
 | `barge_in` | `{utteranceId}` |
 | `tts_start` / `tts_end` | `{id}` |
+| `metrics` | `{utteranceId, speechMs, sttMs, endpoint}` after STT; `{ttsId, ttsMs}` after TTS |
 | `tts_audio` | JSON header `{id, seq, format, sampleRate, text}` + binary body |
 | `screen_state` | `{active, paused, source}` when screen capture is backend-owned |
 | `error` | `{code, message, retryable}` |
@@ -690,9 +691,10 @@ a Download button; a user-selected `UNSLOTH_LIVE_VAD_MODEL` /
 - Exit: all metrics met; existing Studio tests green.
 - Implemented: error paths return to idle with actionable text, accessibility
   labels/announcements, Turkish/English parity, start/stop race guards, screen
-  pause, and cloud-screen consent.
-- Remaining: reconnect policy, per-turn latency metrics, keyboard shortcuts,
-  30-minute soak and packaged-build/HIL verification.
+  pause, cloud-screen consent, and per-turn speech/STT/TTS timing events.
+- Remaining: reconnect policy, a latency dashboard (the metrics events are
+  emitted but only tests consume them), keyboard shortcuts, 30-minute soak and
+  packaged-build/HIL verification.
 
 ### Phase 6 - Optional true full-duplex
 

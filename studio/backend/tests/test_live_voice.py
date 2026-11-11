@@ -358,6 +358,21 @@ def test_full_turn_transcribes_and_speaks() -> None:
     assert "tts_start" in kinds
     assert "tts_end" in kinds
     assert audio_frames and audio_frames[0].startswith(b"RIFF")
+    turn_metrics = [
+        event
+        for event in events
+        if event.get("type") == "metrics" and "utteranceId" in event
+    ]
+    assert turn_metrics
+    assert turn_metrics[0]["speechMs"] >= 0
+    assert turn_metrics[0]["sttMs"] >= 0
+    assert turn_metrics[0]["endpoint"] in ("semantic", "silence", "max")
+    tts_metrics = [
+        event
+        for event in events
+        if event.get("type") == "metrics" and "ttsId" in event
+    ]
+    assert tts_metrics and tts_metrics[0]["ttsMs"] >= 0
 
 
 def test_barge_in_while_playback_is_active() -> None:

@@ -125,6 +125,7 @@ class SpeakItem:
     seq: int
     text: str
     generation: int
+    queued_at: float = 0.0
 
 
 class LiveSession:
@@ -152,7 +153,9 @@ class LiveSession:
         smart_turn_path = _smart_turn_path()
         self._smart_turn = smart_turn or SmartTurnScorer(model_path = smart_turn_path)
         self._audio_queue: asyncio.Queue[bytes] = asyncio.Queue(maxsize = 96)
-        self._stt_queue: asyncio.Queue[tuple[str, bytes]] = asyncio.Queue(maxsize = 8)
+        self._stt_queue: asyncio.Queue[tuple[str, bytes, float, float, str]] = (
+            asyncio.Queue(maxsize = 8)
+        )
         self._tts_queue: asyncio.Queue[SpeakItem] = asyncio.Queue()
         self._tasks: list[asyncio.Task[Any]] = []
         self._closed = False
@@ -167,6 +170,7 @@ class LiveSession:
         self._frame_ms = float(FRAME_MS)
         self._last_level_at = 0.0
         self._last_speech_start_ms = 0
+        self._utterance_started_at = 0.0
         self._utterance_counter = 0
         self._playback_active = False
         self._barge_in_sent = False
@@ -315,6 +319,7 @@ class LiveSession:
                 seq = seq,
                 text = text,
                 generation = self._tts_generation,
+                queued_at = time.monotonic(),
             )
         )
 
@@ -371,6 +376,7 @@ class LiveSession:
             self._pre_roll.clear()
             self._last_smart_turn_silence_ms = None
             self._last_speech_start_ms = int(now * 1000)
+            self._utterance_started_at = now
             await self._set_state("speech")
             await self._send(event("speech_started", atMs = self._last_speech_start_ms))
             await self._maybe_barge_in()
@@ -432,15 +438,22 @@ class LiveSession:
             return
         self._utterance_counter += 1
         utterance_id = f"utt-{self._utterance_counter}"
+        item = (
+            utterance_id,
+            utterance,
+            self._utterance_started_at,
+            time.monotonic(),
+            endpoint.reason,
+        )
         try:
-            self._stt_queue.put_nowait((utterance_id, utterance))
+            self._stt_queue.put_nowait(item)
         except asyncio.QueueFull:
             try:
                 self._stt_queue.get_nowait()
             except asyncio.QueueEmpty:
                 pass
             try:
-                self._stt_queue.put_nowait((utterance_id, utterance))
+                self._stt_queue.put_nowait(item)
             except asyncio.QueueFull:
                 pass
         await self._set_state("transcribing")
@@ -480,7 +493,13 @@ class LiveSession:
     async def _stt_worker(self) -> None:
         while not self._closed:
             try:
-                utterance_id, pcm = await self._stt_queue.get()
+                (
+                    utterance_id,
+                    pcm,
+                    started_at,
+                    endpoint_at,
+                    endpoint_reason,
+                ) = await self._stt_queue.get()
             except asyncio.CancelledError:
                 return
             wav = audio.pcm16_wav(pcm, self.config.sample_rate)
@@ -521,6 +540,15 @@ class LiveSession:
                     utteranceId = utterance_id,
                     language = self.config.language,
                     durationMs = int(audio.frame_duration_ms(pcm, self.config.sample_rate)),
+                )
+            )
+            await self._send(
+                event(
+                    "metrics",
+                    utteranceId = utterance_id,
+                    speechMs = max(0, int((endpoint_at - started_at) * 1000)),
+                    sttMs = max(0, int((time.monotonic() - endpoint_at) * 1000)),
+                    endpoint = endpoint_reason,
                 )
             )
             if not self._speaking and not self._playback_active and self._tts_queue.empty():
@@ -581,6 +609,13 @@ class LiveSession:
             )
             await self._send_bytes(wav_bytes)
             await self._send(event("tts_end", id = item.id, seq = item.seq))
+            await self._send(
+                event(
+                    "metrics",
+                    ttsId = item.id,
+                    ttsMs = max(0, int((time.monotonic() - item.queued_at) * 1000)),
+                )
+            )
             # The client owns playback.  Treating it as active until it says
             # playback_finished gives barge-in a correct window and keeps turn
             # mode from accepting a second utterance mid-sentence.
