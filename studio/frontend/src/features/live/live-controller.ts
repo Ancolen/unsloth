@@ -117,9 +117,13 @@ class LiveController {
     store.setScreenFrame(null);
     this.liveTurnSent = false;
     try {
-      const status = await this.ensureStatus();
+      const status = await this.ensureStatus(true);
       if (!status?.enabled) {
-        throw new Error("Live voice is disabled on this server.");
+        throw new Error(
+          status
+            ? "Live voice is disabled on this server."
+            : "Live voice is unavailable on this server.",
+        );
       }
       const token = getLiveToken();
       if (!token) {
