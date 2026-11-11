@@ -722,16 +722,19 @@ parallel.
 
 ## 10. Tests and acceptance
 
-Automated:
+Automated, implemented today:
 
-- Backend unit: VAD (synthetic speech/silence), endpoint decisions, resampler, WAV
-  encode, TTS queue cancellation, fake STT.
-- Backend integration: feed a WAV fixture into a WS session; assert `transcript`,
-  `endpoint`, `barge_in`, `tts_cancel` events.
-- Frontend unit: controller transitions, sentence extraction, TTS queue cancel,
-  attachment flow, composer send mocks.
-- Component: Live button visibility, bar states, error cards, settings.
-- HIL: real mic/speaker, GNOME portal, 30-minute session.
+- Backend `tests/test_live_voice.py` (19 tests): protocol validation, energy VAD,
+  Silero session reuse, endpoint policy and clamping, full turn (transcript,
+  TTS, metrics), barge-in, stop-during-STT/stop-during-TTS races, pinned asset
+  download/hash failure, Piper/XTTS adapters and detector status.
+- Frontend `tests/live-sentence-stream.test.ts` (3 tests): visible-text
+  extraction, trailing-sentence withholding and prefix-change restart.
+
+Planned but not written yet: controller transition tests with mocked
+socket/player, attachment/composer-send mocks, component tests for the button,
+bar and settings, and the HIL run (real mic/speaker, GNOME portal, 30-minute
+session). The acceptance metrics below are targets until that run.
 
 Acceptance metrics:
 
@@ -755,9 +758,9 @@ Acceptance metrics:
 |---|---|---|
 | Weak echo cancellation in WebKitGTK | False barge-in | Turn mode default; use `getSettings().echoCancellation`; headphone guidance; backend PipeWire AEC later |
 | GStreamer/portal packaging | Screen feature broken in releases | Compile the Rust module on Linux; installer dependency checks; AppImage test; `gst-launch` fallback |
-| Slow/serialized TTS engine | High first-audio latency | Piper CPU default; one-sentence first chunk; prefetch; live queue priority; audio.cpp cancel_event |
+| Slow/serialized TTS engine | High first-audio latency | Studio voice default; Piper CPU opt-in; send the first sentence as soon as it is complete; frontend queues following clips gaplessly; audio.cpp cancel_event |
 | Turkish TTS quality | Poor UX | Start with Piper `tr_TR-fettah`; optional XTTS; test Studio audio.cpp models |
-| VRAM pressure | Model load failures | Live VRAM estimate; CPU fallback; disable XTTS; idle unload |
+| VRAM pressure | Model load failures | Studio's model manager and VRAM status; CPU-first local engines; XTTS stays opt-in |
 | Upstream conflicts | Maintenance burden | New directories + feature flag + minimal anchor edits; regular rebase |
 | Licensing | Distribution risk | Studio AGPL-3.0-only; XTTS CPML; model license gates; branding review |
 | Privacy | Audio/frame leaks | Local defaults; explicit consent; indicators; no raw audio persistence |
