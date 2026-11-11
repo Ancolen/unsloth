@@ -126,6 +126,7 @@ class LiveController {
         throw new Error("Sign in again before starting live voice.");
       }
       if (this.startCancelled(startToken)) {
+        this.starting = false;
         return;
       }
       this.token = token;
@@ -176,6 +177,7 @@ class LiveController {
       });
       await this.player.prepare();
       if (this.startCancelled(startToken)) {
+        this.starting = false;
         this.player.dispose();
         return;
       }
@@ -200,6 +202,7 @@ class LiveController {
       this.echoCancellation = captureInfo.echoCancellation;
       useLiveStore.getState().setEchoCancellation(captureInfo.echoCancellation);
       if (this.startCancelled(startToken)) {
+        this.starting = false;
         this.capture.stop();
         this.player.dispose();
         return;
