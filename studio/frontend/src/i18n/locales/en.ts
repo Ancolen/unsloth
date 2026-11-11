@@ -5751,6 +5751,8 @@ export const en = {
     unmute: "Unmute live microphone",
     screenOn: "Share screen",
     screenOff: "Stop sharing screen",
+    screenPause: "Pause screen sharing",
+    screenResume: "Resume screen sharing",
     screenPreview: "Screen preview",
     hint: "Speak naturally; the assistant will answer aloud.",
     echoWarning: "Headphones are recommended for barge-in.",

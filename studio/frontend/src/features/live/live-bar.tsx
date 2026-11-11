@@ -10,6 +10,8 @@ import {
   MicOff,
   Monitor,
   MonitorOff,
+  Pause,
+  Play,
   Square,
   X,
 } from "lucide-react";
@@ -63,6 +65,7 @@ export const LiveBar: FC = () => {
   const transcript = useLiveStore((state) => state.transcript);
   const screenActive = useLiveStore((state) => state.screenActive);
   const screenStarting = useLiveStore((state) => state.screenStarting);
+  const screenPaused = useLiveStore((state) => state.screenPaused);
   const screenFrame = useLiveStore((state) => state.screenFrame);
   const error = useLiveStore((state) => state.error);
   const echoCancellation = useLiveStore((state) => state.echoCancellation);
@@ -157,6 +160,28 @@ export const LiveBar: FC = () => {
                 <MonitorOff className="size-4" />
               ) : (
                 <Monitor className="size-4" />
+              )}
+            </TooltipIconButton>
+          ) : null}
+          {screenActive ? (
+            <TooltipIconButton
+              tooltip={
+                screenPaused ? t("live.screenResume") : t("live.screenPause")
+              }
+              aria-label={
+                screenPaused ? t("live.screenResume") : t("live.screenPause")
+              }
+              type="button"
+              className={cn(
+                "size-8 rounded-full",
+                screenPaused && "bg-amber-500/10 text-amber-600",
+              )}
+              onClick={() => void liveController.toggleScreenPause()}
+            >
+              {screenPaused ? (
+                <Play className="size-4" />
+              ) : (
+                <Pause className="size-4" />
               )}
             </TooltipIconButton>
           ) : null}

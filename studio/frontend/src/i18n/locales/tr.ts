@@ -6105,6 +6105,8 @@ export const tr = {
     unmute: "Canlı mikrofonu aç",
     screenOn: "Ekranı paylaş",
     screenOff: "Ekran paylaşımını durdur",
+    screenPause: "Ekran paylaşımını duraklat",
+    screenResume: "Ekran paylaşımına devam et",
     screenPreview: "Ekran önizlemesi",
     hint: "Doğal konuşun; asistan sesli yanıtlar.",
     echoWarning: "Kesintili mod için kulaklık önerilir.",

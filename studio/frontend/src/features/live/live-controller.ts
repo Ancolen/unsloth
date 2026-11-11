@@ -22,6 +22,7 @@ import {
   latestLiveScreenFrame,
   liveScreenStatus,
   liveScreenSupported,
+  pauseLiveScreen,
   startLiveScreen,
   stopLiveScreen,
 } from "./live-screen";
@@ -114,7 +115,9 @@ class LiveController {
     store.setModelsReady(false);
     store.setScreenActive(false);
     store.setScreenStarting(false);
+    store.setScreenPaused(false);
     store.setScreenFrame(null);
+    store.setScreenPaused(false);
     this.liveTurnSent = false;
     try {
       const status = await this.ensureStatus(true);
@@ -318,6 +321,7 @@ class LiveController {
       }
       const current = useLiveStore.getState();
       current.setScreenActive(true);
+      current.setScreenPaused(false);
       current.setError(null);
       this.lastScreenFrame = await latestLiveScreenFrame();
       if (this.lastScreenFrame) {
@@ -339,6 +343,25 @@ class LiveController {
     }
   }
 
+  async toggleScreenPause(): Promise<void> {
+    const store = useLiveStore.getState();
+    if (!store.screenActive || store.screenStarting) {
+      return;
+    }
+    const paused = !store.screenPaused;
+    try {
+      await pauseLiveScreen(paused);
+      if (!useLiveStore.getState().screenActive) {
+        return;
+      }
+      useLiveStore.getState().setScreenPaused(paused);
+    } catch (error) {
+      useLiveStore
+        .getState()
+        .setError(errorMessage(error, "The screen stream could not be paused."));
+    }
+  }
+
   private async stopScreen(): Promise<void> {
     if (this.screenTimer !== null) {
       window.clearInterval(this.screenTimer);
@@ -347,6 +370,7 @@ class LiveController {
     const store = useLiveStore.getState();
     store.setScreenActive(false);
     store.setScreenStarting(false);
+    store.setScreenPaused(false);
     store.setScreenFrame(null);
     this.lastScreenFrame = null;
     try {
@@ -357,7 +381,9 @@ class LiveController {
   }
 
   private async refreshScreenFrame(): Promise<void> {
-    if (!useLiveStore.getState().screenActive) {
+    const store = useLiveStore.getState();
+    if (!store.screenActive || store.screenPaused) {
+      // A paused stream keeps the last preview; resume fetches new frames again.
       return;
     }
     try {

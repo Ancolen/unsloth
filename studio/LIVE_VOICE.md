@@ -30,7 +30,7 @@ Add a first-class, hands-free voice conversation mode to the normal Studio chat:
 
 - A **Live** button next to the existing composer microphone.
 - Pressing it opens a live bar over the composer: waveform, state, live transcript,
-  screen-sharing thumbnail, mute / stop.
+  screen-sharing thumbnail, mute / pause / stop.
 - Speech is transcribed locally, sent as a normal chat message, and the assistant
   reply is spoken sentence by sentence while it streams.
 - The user can interrupt the assistant (barge-in). The default mode is turn-based;
@@ -447,6 +447,8 @@ SPEAKING + barge_in -> INTERRUPTED -> LISTENING
 - Live bar screen toggle calls Tauri `invoke("live_screen_start")`.
 - GNOME portal picker appears on first use.
 - Preview polls `invoke("live_screen_latest")` at 1 fps.
+- Pause keeps the last preview and stops polling; resume continues the same
+  portal stream without a new picker dialog.
 - On send, the same JPEG becomes a `File` and is attached to the message.
 - Vision capability and cloud consent checks are performed before attaching.
 - "What changed?" can attach the previous keyframe plus the current frame later.
