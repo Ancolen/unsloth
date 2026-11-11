@@ -339,8 +339,9 @@ Engines:
 | XTTS-v2 | opt-in | GPU, ~1.8 GB VRAM, CPML non-commercial license gate; `UNSLOTH_LIVE_TTS=xtts` |
 | Studio audio.cpp models | default | Kokoro/Piper EN/Qwen3-TTS/CosyVoice/IndexTTS2; test Turkish first |
 
-Text is cleaned in the frontend (`markdownToSpeechText`): code blocks are skipped,
-tool-call JSON and reasoning are never spoken. v1 uses WAV; Opus can follow.
+Text is cleaned in the frontend: `LiveSentenceStream` strips fenced code blocks,
+then `markdownToSpeechText` removes markup; tool-call JSON and reasoning are
+never spoken. v1 uses WAV; Opus can follow.
 
 ### 5.6 Model readiness and VRAM
 
