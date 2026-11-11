@@ -5778,6 +5778,10 @@ export const en = {
       language: "Conversation language",
       attachScreen: "Attach a screen frame every turn",
       interruptWhileThinking: "Interrupt while the assistant is thinking",
+      screenDesktopOnly:
+        "Screen sharing is available in Unsloth Desktop on Linux.",
+      attachScreenCloud:
+        "Screen frames are sent to the selected chat model, including cloud providers.",
     },
   },
 } as const;

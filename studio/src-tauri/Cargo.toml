@@ -69,6 +69,11 @@ block2 = "0.6"
 system-configuration = "0.8"
 
 [target.'cfg(target_os = "linux")'.dependencies]
+# Live Voice screen capture: xdg-desktop-portal ScreenCast + PipeWire/GStreamer
+# (live_screen.rs).  ashpd uses Tauri's tokio runtime for the portal handshake.
+ashpd = { version = "0.14", features = ["tokio", "screencast"] }
+gstreamer = "0.24"
+gstreamer-app = "0.24"
 cairo-rs = { version = "0.18", features = ["png"] }
 gdk = "0.18"
 gdk-pixbuf = "0.18"

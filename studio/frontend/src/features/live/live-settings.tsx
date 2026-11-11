@@ -5,6 +5,7 @@ import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import type { FC } from "react";
 import { liveController } from "./live-controller";
+import { liveScreenSupported } from "./live-screen";
 import { useLiveStore } from "./live-store";
 
 const LANGUAGES = ["tr", "en", "auto"];
@@ -23,11 +24,11 @@ export const LiveSettings: FC = () => {
   );
   const echoCancellation = useLiveStore((state) => state.echoCancellation);
   const enabled = useLiveStore((state) => state.enabled);
+  const screenSupported = liveScreenSupported();
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <span className="text-sm font-medium">{t("live.settings.title")}</span>
         <span className="text-xs text-muted-foreground">
           {enabled ? t("live.settings.enabled") : t("live.settings.disabled")}
         </span>
@@ -83,11 +84,22 @@ export const LiveSettings: FC = () => {
         <input
           type="checkbox"
           checked={attachScreen}
+          disabled={!screenSupported}
           onChange={(event) =>
             useLiveStore.getState().setAttachScreen(event.target.checked)
           }
         />
       </label>
+      {screenSupported ? null : (
+        <p className="text-xs text-muted-foreground">
+          {t("live.settings.screenDesktopOnly")}
+        </p>
+      )}
+      {attachScreen ? (
+        <p className="text-xs text-amber-600 dark:text-amber-400">
+          {t("live.settings.attachScreenCloud")}
+        </p>
+      ) : null}
 
       <label className="flex items-center justify-between gap-4 text-sm">
         <span>{t("live.settings.interruptWhileThinking")}</span>

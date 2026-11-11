@@ -20,6 +20,7 @@ import {
   frameToDataUrl,
   frameToFile,
   latestLiveScreenFrame,
+  liveScreenStatus,
   liveScreenSupported,
   startLiveScreen,
   stopLiveScreen,
@@ -39,6 +40,7 @@ export interface LiveBridge {
   saveDraft: () => string;
   restoreDraft: (draft: string) => void;
   isRunActive: () => boolean;
+  currentAssistantMessageId: () => string | null;
 }
 
 const PROTOCOL_VERSION = 1;
@@ -60,6 +62,8 @@ class LiveController {
   private savedDraft = "";
   private savedAutoRead: boolean | null = null;
   private assistantMessageId: string | null = null;
+  private baselineAssistantId: string | null = null;
+  private liveTurnSent = false;
   private pendingTtsId: string | null = null;
   private currentPlaybackId: string | null = null;
   private ttsSeq = 0;
@@ -103,6 +107,10 @@ class LiveController {
     store.setPartial("");
     store.setLevel(0);
     store.setModelsReady(false);
+    store.setScreenActive(false);
+    store.setScreenStarting(false);
+    store.setScreenFrame(null);
+    this.liveTurnSent = false;
     try {
       const status = await this.ensureStatus();
       if (!status?.enabled) {
@@ -115,6 +123,11 @@ class LiveController {
       this.token = token;
       if (this.bridge) {
         this.savedDraft = this.bridge.saveDraft();
+        // Do not speak an assistant answer that was already on screen before
+        // Live started; only a new message that follows a live transcript is
+        // eligible for TTS.
+        this.baselineAssistantId = this.bridge.currentAssistantMessageId();
+        this.runActive = this.bridge.isRunActive();
       }
       this.savedAutoRead = useVoiceSettingsStore.getState().autoReadAloud;
       useVoiceSettingsStore.getState().setAutoReadAloud(false);
@@ -144,7 +157,11 @@ class LiveController {
       await this.player.prepare();
 
       const settings = useLiveStore.getState();
-      const micDeviceId = useVoiceSettingsStore.getState().micDeviceId;
+      const voiceSettings = useVoiceSettingsStore.getState();
+      const micDeviceId = voiceSettings.micDeviceId;
+      const sttModel = settings.sttModel || voiceSettings.sttModel || undefined;
+      const voice =
+        settings.voice || voiceSettings.ttsStudioVoiceId || undefined;
       const captureInfo = await this.capture.start(micDeviceId || "default", {
         onFrame: (frame) => {
           this.socket.sendBinary(frame);
@@ -168,9 +185,9 @@ class LiveController {
             channels: 1,
             language: settings.language || "tr",
             mode: settings.mode,
-            sttModel: settings.sttModel || undefined,
+            sttModel,
             ttsModel: settings.ttsModel || undefined,
-            voice: settings.voice || undefined,
+            voice,
             echoCancellation: captureInfo.echoCancellation,
           });
           this.socket.sendJson({ type: "start" });
@@ -239,25 +256,41 @@ class LiveController {
       await this.stopScreen();
       return;
     }
+    if (store.screenStarting) {
+      return;
+    }
     if (!liveScreenSupported()) {
       store.setError(new LiveScreenUnsupportedError().message);
       return;
     }
+    store.setScreenStarting(true);
     try {
       await startLiveScreen();
-      store.setScreenActive(true);
-      store.setError(null);
+      // Live voice may have been stopped while the portal dialog was open.
+      if (!useLiveStore.getState().active) {
+        await stopLiveScreen().catch(() => undefined);
+        return;
+      }
+      const current = useLiveStore.getState();
+      current.setScreenActive(true);
+      current.setError(null);
       this.lastScreenFrame = await latestLiveScreenFrame();
       if (this.lastScreenFrame) {
-        store.setScreenFrame(frameToDataUrl(this.lastScreenFrame));
+        current.setScreenFrame(frameToDataUrl(this.lastScreenFrame));
       }
       this.screenTimer = window.setInterval(() => {
         void this.refreshScreenFrame();
       }, 1000);
     } catch (error) {
-      store.setScreenActive(false);
-      store.setScreenFrame(null);
-      store.setError(errorMessage(error, "Could not start screen sharing."));
+      if (!useLiveStore.getState().active) {
+        return;
+      }
+      const current = useLiveStore.getState();
+      current.setScreenActive(false);
+      current.setScreenFrame(null);
+      current.setError(errorMessage(error, "Could not start screen sharing."));
+    } finally {
+      useLiveStore.getState().setScreenStarting(false);
     }
   }
 
@@ -268,6 +301,7 @@ class LiveController {
     }
     const store = useLiveStore.getState();
     store.setScreenActive(false);
+    store.setScreenStarting(false);
     store.setScreenFrame(null);
     this.lastScreenFrame = null;
     try {
@@ -283,12 +317,22 @@ class LiveController {
     }
     try {
       const frame = await latestLiveScreenFrame();
-      if (!frame) {
+      if (frame) {
+        this.lastScreenFrame = frame;
+        useLiveStore.getState().setScreenFrame(frameToDataUrl(frame));
         return;
       }
-      this.lastScreenFrame = frame;
-      useLiveStore.getState().setScreenFrame(frameToDataUrl(frame));
+      // A null frame can mean "paused" as well as "the stream failed".  The
+      // status distinguishes the two; only tear down on a real stop/error.
+      const status = await liveScreenStatus();
+      if (status && !status.active) {
+        await this.stopScreen();
+        if (status.error) {
+          useLiveStore.getState().setError(status.error);
+        }
+      }
     } catch (error) {
+      await this.stopScreen();
       useLiveStore
         .getState()
         .setError(errorMessage(error, "The screen preview stopped."));
@@ -302,6 +346,26 @@ class LiveController {
   ): void {
     if (!useLiveStore.getState().active) {
       return;
+    }
+    if (!this.liveTurnSent) {
+      // Live has not sent a transcript yet; do not read old chat history aloud,
+      // but still flush a transcript that waited for the previous run to end.
+      this.runActive = running;
+      if (!running) {
+        this.flushPendingTranscript();
+      }
+      return;
+    }
+    if (messageId && messageId === this.baselineAssistantId) {
+      // This is the answer that was already on screen when Live started.
+      this.runActive = running;
+      if (!running) {
+        this.flushPendingTranscript();
+      }
+      return;
+    }
+    if (messageId !== null) {
+      this.baselineAssistantId = null;
     }
     if (messageId !== this.assistantMessageId) {
       this.assistantMessageId = messageId;
@@ -325,16 +389,20 @@ class LiveController {
       }
     }
     if (!running) {
-      const pending = this.pendingTranscript;
-      this.pendingTranscript = null;
-      if (pending) {
-        void this.sendTranscript(pending);
-      } else {
-        const state = useLiveStore.getState().state;
-        if (state === "thinking") {
-          useLiveStore.getState().setState("listening");
-        }
-      }
+      this.flushPendingTranscript();
+    }
+  }
+
+  private flushPendingTranscript(): void {
+    const pending = this.pendingTranscript;
+    this.pendingTranscript = null;
+    if (pending) {
+      void this.sendTranscript(pending);
+      return;
+    }
+    const store = useLiveStore.getState();
+    if (store.state === "thinking") {
+      store.setState("listening");
     }
   }
 
@@ -388,6 +456,7 @@ class LiveController {
         attachment = null;
       }
     }
+    this.liveTurnSent = true;
     useLiveStore.getState().setState("thinking");
     try {
       await bridge.sendUserMessage(clean, attachment);
@@ -525,12 +594,18 @@ class LiveController {
       window.clearInterval(this.screenTimer);
       this.screenTimer = null;
     }
-    if (useLiveStore.getState().screenActive) {
+    if (
+      useLiveStore.getState().screenActive ||
+      useLiveStore.getState().screenStarting
+    ) {
       void stopLiveScreen().catch(() => {});
     }
     useLiveStore.getState().setScreenActive(false);
+    useLiveStore.getState().setScreenStarting(false);
     useLiveStore.getState().setScreenFrame(null);
     this.assistantMessageId = null;
+    this.baselineAssistantId = null;
+    this.liveTurnSent = false;
     this.pendingTtsId = null;
     this.currentPlaybackId = null;
     this.pendingTranscript = null;

@@ -5,6 +5,20 @@ Owner: Ancolen
 Target: Unsloth Desktop (Linux first), Studio web UI where possible
 Feature flag: `UNSLOTH_STUDIO_LIVE_VOICE=1`
 
+**Implementation status (2026-11-12):**
+
+- Backend live engine (`core/live/`), `/api/live/ws`, energy VAD, endpointing,
+  in-process STT/TTS, barge-in and the protocol tests are implemented.
+- Frontend Live button/bar, microphone capture, 16 kHz framing, WebAudio playback,
+  streamed sentence TTS and the assistant-ui bridge are implemented.
+- Linux screen capture is implemented with xdg-desktop-portal ScreenCast +
+  `OpenPipeWireRemote` + GStreamer (`pipewiresrc ! videorate ! videoscale ! jpegenc`),
+  including the restore token, a latest-frame ring buffer and pause/stop. It still
+  needs hardware-in-the-loop validation on GNOME Wayland and installer/packaging
+  checks.
+- Pending: Silero/Smart Turn asset auto-download, the Live model catalog/settings
+  UI, partial transcripts, and Phase 5 hardening.
+
 ## 1. Goal
 
 Add a first-class, hands-free voice conversation mode to the normal Studio chat:
@@ -452,20 +466,31 @@ xdg-desktop-portal ScreenCast (ashpd / D-Bus)
  -> latest JPEG ring buffer
 ```
 
-- First use shows the GNOME picker; the restore token is stored in the app data
-  directory.
-- Frames are downscaled to at most 1280 px wide, JPEG quality ~80.
-- `pause` stops frame production; the UI shows a paused indicator.
+- First use shows the GNOME picker. The restore token is written with mode 0600
+  to `<app config dir>/live-screencast-token`, so later sessions reuse the same
+  source without a picker (GNOME suppresses the dialog with `persist_mode=2`).
+- The portal returns a `restore_token` and a PipeWire node; `OpenPipeWireRemote`
+  supplies the remote fd, which `pipewiresrc` consumes alongside `path=<node>`.
+- Frames are downscaled to 1280 px wide, JPEG quality 80, and kept in a six-frame
+  in-memory ring buffer. No frame is written to disk.
+- `pause` drops frames without tearing down the portal stream, so resume is
+  immediate; `stop` sets the pipeline to NULL, joins the capture thread (with a
+  2 s escape hatch) and closes the portal session.
+- A capture error marks the session inactive and publishes the message through
+  `live_screen_status`; the frontend stops its preview timer and offers a retry.
 - v1 privacy: portal picker + pause + persistent indicator. Window-title/app
   filtering is a follow-up (D-Bus focused-window probe).
-- Linux only. Other platforms compile the module out and hide the screen button.
+- Linux only. Other platforms compile a stub with the same commands and hide the
+  screen button; the voice engine itself still works everywhere.
 
 Dependencies and packaging:
 
-- Rust: `ashpd`, `gstreamer`, `gstreamer-app`, `image` (plus existing `base64`,
-  `tokio`).
-- System: GStreamer base/good, PipeWire, xdg-desktop-portal. Add checks to
-  `studio/setup.sh` and the Linux installer.
+- Rust: `ashpd` (tokio portal client), `gstreamer`, `gstreamer-app` (plus the
+  existing `base64` and `tokio`).
+- System: GStreamer base/good (`pipewiresrc`, `videorate`, `videoscale`,
+  `videoconvert`, `jpegenc`, `appsink`), PipeWire, xdg-desktop-portal. The
+  capture thread checks every element and returns an actionable error when one is
+  missing. Add the checks to `studio/setup.sh` and the Linux installer.
 - AppImage must bundle the required GStreamer plugins; this is the main packaging
   risk. Fallback: portal handshake plus a `gst-launch-1.0` helper managed by the
   backend, still inside Studio.
@@ -528,13 +553,18 @@ Download flow:
 - Exit: first audio p50 <= 1.5 s; barge-in stops audio <= 200 ms; sentence gaps
   <= 300 ms; no double speaking.
 
-### Phase 3 - Screen sharing (1.5-2 weeks)
+### Phase 3 - Screen sharing (1.5-2 weeks) - implemented, HIL validation pending
 
-- Tauri portal + PipeWire + JPEG capture, restore token, pause, Linux packaging.
-- Frontend screen toggle, preview, frame attachment, vision checks, cloud consent.
-- Backend optional window filter; optional VLM bridge for text-only chat.
+- Tauri portal + PipeWire + JPEG capture, restore token, pause, Linux packaging:
+  implemented in `src-tauri/src/live_screen.rs` (ashpd + GStreamer, 1 fps, 1280 px,
+  six-frame ring, generation-guarded restart/stop).
+- Frontend screen toggle, preview, frame attachment, vision checks, cloud consent:
+  implemented (Linux desktop detection, start-state spinner, status-driven error
+  recovery, attached JPEG on the next live turn).
+- Backend optional window filter; optional VLM bridge for text-only chat: not yet
+  (follow-up).
 - Exit: toggle -> picker -> preview <= 2 s; the sent message carries the frame; no
-  cloud upload without consent.
+  cloud upload without consent. Needs a GNOME Wayland run and packaged-build check.
 
 ### Phase 4 - Model catalog and Turkish voice (1-2 weeks)
 

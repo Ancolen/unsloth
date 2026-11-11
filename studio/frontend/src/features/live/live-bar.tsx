@@ -4,7 +4,15 @@
 import { TooltipIconButton } from "@/components/assistant-ui/tooltip-icon-button";
 import { type TranslationKey, useT } from "@/i18n";
 import { cn } from "@/lib/utils";
-import { Mic, MicOff, Monitor, MonitorOff, Square, X } from "lucide-react";
+import {
+  Loader2,
+  Mic,
+  MicOff,
+  Monitor,
+  MonitorOff,
+  Square,
+  X,
+} from "lucide-react";
 import type { FC } from "react";
 import { liveController } from "./live-controller";
 import { liveScreenSupported } from "./live-screen";
@@ -54,6 +62,7 @@ export const LiveBar: FC = () => {
   const mode = useLiveStore((state) => state.mode);
   const transcript = useLiveStore((state) => state.transcript);
   const screenActive = useLiveStore((state) => state.screenActive);
+  const screenStarting = useLiveStore((state) => state.screenStarting);
   const screenFrame = useLiveStore((state) => state.screenFrame);
   const error = useLiveStore((state) => state.error);
   const echoCancellation = useLiveStore((state) => state.echoCancellation);
@@ -87,6 +96,7 @@ export const LiveBar: FC = () => {
         >
           {bars.map((height, index) => (
             <span
+              // biome-ignore lint/suspicious/noArrayIndexKey: the meter has a fixed bar count and every bar is stateless.
               key={`live-bar-${index}`}
               className="w-[2px] shrink-0 rounded-full bg-primary/70 transition-[height] duration-100"
               style={{ height: `${height}px` }}
@@ -134,9 +144,12 @@ export const LiveBar: FC = () => {
                 screenActive &&
                   "bg-primary/10 text-primary hover:bg-primary/15",
               )}
+              disabled={screenStarting}
               onClick={() => void liveController.toggleScreen()}
             >
-              {screenActive ? (
+              {screenStarting ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : screenActive ? (
                 <MonitorOff className="size-4" />
               ) : (
                 <Monitor className="size-4" />

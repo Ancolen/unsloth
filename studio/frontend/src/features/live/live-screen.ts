@@ -4,6 +4,9 @@
 import { isTauri } from "@/lib/api-base";
 import type { LiveFramePayload, LiveScreenStatus } from "./live-types";
 
+const LINUX_PLATFORM = /Linux/i;
+const ANDROID_PLATFORM = /Android/i;
+
 export class LiveScreenUnsupportedError extends Error {
   constructor(
     message = "Screen sharing is only available in Unsloth Desktop on Linux.",
@@ -25,7 +28,13 @@ async function invokeTauri<T>(
 }
 
 export function liveScreenSupported(): boolean {
-  return isTauri;
+  if (!isTauri || typeof navigator === "undefined") {
+    return false;
+  }
+  // The xdg-desktop-portal ScreenCast backend is Linux-only; macOS and
+  // Windows keep the voice-only Live button.
+  const source = `${navigator.platform ?? ""} ${navigator.userAgent ?? ""}`;
+  return LINUX_PLATFORM.test(source) && !ANDROID_PLATFORM.test(source);
 }
 
 export async function startLiveScreen(): Promise<LiveScreenStatus> {

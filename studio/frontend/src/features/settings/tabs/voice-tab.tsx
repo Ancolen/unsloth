@@ -25,6 +25,7 @@ import {
 } from "@/features/audio/audio-cpp-catalog";
 import { useAudioVoicesStore } from "@/features/audio/stores/audio-voices-store";
 import { useIsAccountOwner } from "@/features/auth";
+import { LiveSettings } from "@/features/live/live-settings";
 import { audioModelLabel } from "../../audio/audio-workspace-utils";
 import {
   type SttDownloadStatus,
@@ -2038,6 +2039,10 @@ export function VoiceTab() {
             description={t("settings.voice.readAloud.notSupported")}
           />
         )}
+      </SettingsSection>
+
+      <SettingsSection title={t("live.settings.title")}>
+        <LiveSettings />
       </SettingsSection>
     </div>
   );

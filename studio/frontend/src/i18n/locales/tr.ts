@@ -6132,6 +6132,10 @@ export const tr = {
       language: "Konuşma dili",
       attachScreen: "Her turda ekran karesi ekle",
       interruptWhileThinking: "Asistan düşünürken araya gir",
+      screenDesktopOnly:
+        "Ekran paylaşımı Linux'ta Unsloth Desktop ile kullanılabilir.",
+      attachScreenCloud:
+        "Ekran kareleri seçili sohbet modeline, bulut sağlayıcıları dahil, gönderilir.",
     },
   },
 } satisfies DeepPartialMessageTree<typeof en>;

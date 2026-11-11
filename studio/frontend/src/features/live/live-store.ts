@@ -25,6 +25,7 @@ interface LiveRuntime {
   partial: string;
   muted: boolean;
   screenActive: boolean;
+  screenStarting: boolean;
   screenFrame: string | null;
   modelsReady: boolean;
   echoCancellation: boolean;
@@ -42,6 +43,7 @@ export interface LiveStore extends LiveRuntime, LiveSettings {
   setPartial: (partial: string) => void;
   setMuted: (muted: boolean) => void;
   setScreenActive: (active: boolean) => void;
+  setScreenStarting: (starting: boolean) => void;
   setScreenFrame: (frame: string | null) => void;
   setModelsReady: (ready: boolean) => void;
   setEchoCancellation: (supported: boolean) => void;
@@ -65,6 +67,7 @@ const initialRuntime: LiveRuntime = {
   partial: "",
   muted: false,
   screenActive: false,
+  screenStarting: false,
   screenFrame: null,
   modelsReady: false,
   echoCancellation: false,
@@ -100,6 +103,7 @@ export const useLiveStore = create<LiveStore>()(
       setPartial: (partial) => set({ partial }),
       setMuted: (muted) => set({ muted }),
       setScreenActive: (screenActive) => set({ screenActive }),
+      setScreenStarting: (screenStarting) => set({ screenStarting }),
       setScreenFrame: (screenFrame) => set({ screenFrame }),
       setModelsReady: (modelsReady) => set({ modelsReady }),
       setEchoCancellation: (echoCancellation) => set({ echoCancellation }),

@@ -4,7 +4,7 @@
 import { useChatActive } from "@/features/chat";
 import { toast } from "@/lib/toast";
 import { useAui, useAuiState } from "@assistant-ui/react";
-import { type FC, useEffect } from "react";
+import { type FC, useEffect, useRef } from "react";
 import { liveController } from "./live-controller";
 import { extractAssistantSpeechText } from "./live-tts";
 
@@ -35,6 +35,8 @@ export const LiveRuntimeBridge: FC = () => {
     return "";
   });
   const running = useAuiState(({ thread }) => thread.isRunning);
+  const assistantIdRef = useRef<string | null>(assistantId);
+  assistantIdRef.current = assistantId;
 
   useEffect(() => {
     if (!chatActive) {
@@ -82,6 +84,7 @@ export const LiveRuntimeBridge: FC = () => {
         composer.setText(current ? `${current}\n${draft}` : draft);
       },
       isRunActive: () => aui.thread().getState().isRunning,
+      currentAssistantMessageId: () => assistantIdRef.current,
     });
   }, [aui, chatActive]);
 
