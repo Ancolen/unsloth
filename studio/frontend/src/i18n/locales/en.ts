@@ -5791,6 +5791,8 @@ export const en = {
       unknown: "Unknown",
       fakeEngineWarning:
         "A test engine is active. Install real STT/TTS models for production use.",
+      reuseHint:
+        "Live uses the dictation STT model and read-aloud voice selected above; screen turns need a vision-capable chat model.",
     },
   },
 } as const;

@@ -6145,6 +6145,8 @@ export const tr = {
       unknown: "Bilinmiyor",
       fakeEngineWarning:
         "Test motoru etkin. Üretim için gerçek STT/TTS modelleri kurun.",
+      reuseHint:
+        "Canlı ses, yukarıda seçilen dikte STT modelini ve sesli okuma sesini kullanır; ekran turları için görüntü destekli bir sohbet modeli gerekir.",
     },
   },
 } satisfies DeepPartialMessageTree<typeof en>;

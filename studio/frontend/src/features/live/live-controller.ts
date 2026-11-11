@@ -47,6 +47,9 @@ const PROTOCOL_VERSION = 1;
 const SAMPLE_RATE = 16000;
 
 function errorMessage(error: unknown, fallback: string): string {
+  if (typeof error === "string" && error.trim()) {
+    return error;
+  }
   return error instanceof Error && error.message ? error.message : fallback;
 }
 

@@ -140,6 +140,9 @@ export const LiveSettings: FC = () => {
           {t("live.settings.attachScreenCloud")}
         </p>
       ) : null}
+      <p className="text-xs text-muted-foreground">
+        {t("live.settings.reuseHint")}
+      </p>
 
       <label className="flex items-center justify-between gap-4 text-sm">
         <span>{t("live.settings.interruptWhileThinking")}</span>
