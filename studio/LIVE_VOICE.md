@@ -425,7 +425,7 @@ IDLE
  -> THINKING
  -> SPEAKING
  -> LISTENING
-any -> ERROR -> IDLE
+any -> ERROR (persistent card) -> Retry / CONNECTING, or Dismiss / IDLE
 SPEAKING + barge_in -> INTERRUPTED -> LISTENING
 ```
 
@@ -462,18 +462,21 @@ SPEAKING + barge_in -> INTERRUPTED -> LISTENING
   available, `await aui.composer().addAttachment(file)`; then
   `aui.composer().send()`.
 - Streamed reply -> TTS:
-  observe the last assistant message with `useAuiState`; use
-  `markdownToSpeechText` + `splitIntoSentences` + `planTtsChunk` to send complete
-  sentences. Do not speak reasoning, tool-call JSON or tool results.
+  observe the last assistant message with `useAuiState`; `LiveSentenceStream`
+  uses `markdownToSpeechText` + `splitIntoSentences`, withholds the trailing
+  sentence until the run finishes, and sends only new complete sentences. Do not
+  speak reasoning, tool-call JSON or tool results.
 - Barge-in: `aui.thread().cancelRun()`, stop playback, `tts_cancel`.
 - Auto-read is temporarily disabled while live is active; restore the previous value.
 - Dictation is disabled while live is active.
 - Composer draft is saved before live starts and restored after it stops.
-- Live turns are normal messages. Optional metadata: `{live: true, interrupted,
-  audioMs}`. Studio's chat history supports custom metadata.
-- If the chat model is not loaded, the Live button prompts to load one. If screen
-  sharing is on and the model has no vision input, `VisionImageAdapter` rejects the
-  attachment; show an actionable error and send text only or offer a vision model.
+- Live turns are normal messages. Live-specific chat metadata (`live`,
+  `interrupted`, `audioMs`) is not written yet; the design keeps it optional.
+- If no STT or TTS model is available, the first utterance returns an actionable
+  Settings → Voice error and Live stays listening; there is no preflight setup
+  card yet. If screen sharing is on and the model has no vision input,
+  `VisionImageAdapter` rejects the attachment; the composer shows an actionable
+  error and sends the text only.
 - External providers: frame upload requires the `allowCloudScreen` setting;
   otherwise the frame is not attached and the bar shows the blocked notice.
   Every external provider is treated as cloud (fail closed), even a local
