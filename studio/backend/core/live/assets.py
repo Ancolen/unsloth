@@ -4,10 +4,11 @@
 """Pinned ONNX assets for Live Voice.
 
 The VAD and turn-endpoint models are small files with an explicit source,
-revision and SHA-256.  They are downloaded on demand from the Settings UI, not
-at import time: an offline install keeps the energy VAD and the extended silence
-window, and the status endpoint explains the fallback.  Downloads are atomic and
-hash-checked before the file becomes visible under its final name.
+revision and SHA-256.  They are downloaded on demand (before the first Live
+session when enabled, or from the Settings UI), not at import time: an offline
+install keeps the energy VAD and the extended silence window, and the status
+endpoint explains the fallback.  Downloads are atomic and hash-checked before
+the file becomes visible under its final name.
 """
 
 from __future__ import annotations
