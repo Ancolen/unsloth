@@ -6153,6 +6153,8 @@ export const tr = {
         "Test motoru etkin. Üretim için gerçek STT/TTS modelleri kurun.",
       reuseHint:
         "Canlı ses, yukarıda seçilen dikte STT modelini ve sesli okuma sesini kullanır; ekran turları için görüntü destekli bir sohbet modeli gerekir.",
+      systemTtsWarning:
+        "Canlı ses, Studio ses modelinden akış yapar. Tarayıcının sistem sesi kullanılamaz; yukarıdan bir Studio sesi seçin veya Piper/XTTS motorunu kurun.",
     },
   },
 } satisfies DeepPartialMessageTree<typeof en>;

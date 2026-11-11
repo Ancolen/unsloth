@@ -5799,6 +5799,8 @@ export const en = {
         "A test engine is active. Install real STT/TTS models for production use.",
       reuseHint:
         "Live uses the dictation STT model and read-aloud voice selected above; screen turns need a vision-capable chat model.",
+      systemTtsWarning:
+        "Live streams speech from a Studio voice model. The browser's system voice cannot be used; select a Studio voice above or install the Piper/XTTS engine.",
     },
   },
 } as const;

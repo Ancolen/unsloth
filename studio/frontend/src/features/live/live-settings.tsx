@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright 2026-present the Unsloth AI Inc. team. All rights reserved. See /studio/LICENSE.AGPL-3.0
 
+import { useVoiceSettingsStore } from "@/features/settings/stores/voice-settings-store";
 import { useT } from "@/i18n";
 import { cn } from "@/lib/utils";
 import { type FC, useEffect } from "react";
@@ -25,6 +26,7 @@ export const LiveSettings: FC = () => {
   const echoCancellation = useLiveStore((state) => state.echoCancellation);
   const enabled = useLiveStore((state) => state.enabled);
   const status = useLiveStore((state) => state.status);
+  const ttsEngine = useVoiceSettingsStore((state) => state.ttsEngine);
   const screenSupported = liveScreenSupported();
   const fakeEngine =
     status?.capabilities.stt === "fake" || status?.capabilities.tts === "fake";
@@ -95,6 +97,11 @@ export const LiveSettings: FC = () => {
       {fakeEngine ? (
         <p className="text-xs text-amber-600 dark:text-amber-400">
           {t("live.settings.fakeEngineWarning")}
+        </p>
+      ) : null}
+      {ttsEngine === "system" ? (
+        <p className="text-xs text-amber-600 dark:text-amber-400">
+          {t("live.settings.systemTtsWarning")}
         </p>
       ) : null}
 
