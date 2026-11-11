@@ -406,7 +406,9 @@ class LiveController {
     } catch (error) {
       useLiveStore
         .getState()
-        .setError(errorMessage(error, "The screen stream could not be paused."));
+        .setError(
+          errorMessage(error, "The screen stream could not be paused."),
+        );
     }
   }
 

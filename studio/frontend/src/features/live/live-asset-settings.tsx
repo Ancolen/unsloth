@@ -94,9 +94,7 @@ export const LiveAssetSettings = () => {
           type="checkbox"
           checked={autoDownload}
           onChange={(event) =>
-            useLiveStore
-              .getState()
-              .setAutoDownloadAssets(event.target.checked)
+            useLiveStore.getState().setAutoDownloadAssets(event.target.checked)
           }
         />
       </label>

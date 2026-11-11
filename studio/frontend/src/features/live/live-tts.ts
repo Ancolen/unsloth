@@ -4,6 +4,8 @@
 import { markdownToSpeechText } from "../chat/utils/speech-text.ts";
 import { splitIntoSentences } from "../chat/voice/speech-text.ts";
 
+const FENCE_OPEN = /^\s*(`{3,}|~{3,})/;
+
 /**
  * Drop fenced code blocks before the shared markdown-to-speech conversion.
  * Read-aloud intentionally speaks code, but a voice conversation should not read
@@ -14,7 +16,7 @@ function stripFencedCode(markdown: string): string {
   const kept: string[] = [];
   let fence: string | null = null;
   for (const line of markdown.split("\n")) {
-    const opening = /^\s*(`{3,}|~{3,})/.exec(line);
+    const opening = FENCE_OPEN.exec(line);
     if (fence !== null) {
       if (
         opening &&

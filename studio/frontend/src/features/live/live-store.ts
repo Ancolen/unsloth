@@ -127,7 +127,8 @@ export const useLiveStore = create<LiveStore>()(
       setScreenStarting: (screenStarting) => set({ screenStarting }),
       setScreenPaused: (screenPaused) => set({ screenPaused }),
       setScreenFrame: (screenFrame) => set({ screenFrame }),
-      setScreenCloudBlocked: (screenCloudBlocked) => set({ screenCloudBlocked }),
+      setScreenCloudBlocked: (screenCloudBlocked) =>
+        set({ screenCloudBlocked }),
       setModelsReady: (modelsReady) => set({ modelsReady }),
       setEchoCancellation: (echoCancellation) => set({ echoCancellation }),
       setMode: (mode) => set({ mode }),
@@ -137,7 +138,8 @@ export const useLiveStore = create<LiveStore>()(
       setVoice: (voice) => set({ voice }),
       setAttachScreen: (attachScreen) => set({ attachScreen }),
       setAllowCloudScreen: (allowCloudScreen) => set({ allowCloudScreen }),
-      setAutoDownloadAssets: (autoDownloadAssets) => set({ autoDownloadAssets }),
+      setAutoDownloadAssets: (autoDownloadAssets) =>
+        set({ autoDownloadAssets }),
       setInterruptWhileThinking: (interruptWhileThinking) =>
         set({ interruptWhileThinking }),
       setEndpointFastMs: (endpointFastMs) => set({ endpointFastMs }),

@@ -92,9 +92,7 @@ export const LiveRuntimeBridge: FC = () => {
       // External providers may be a local gateway; treating every one as a
       // cloud upload is the fail-closed choice for screen frames.
       isCloudModel: () =>
-        isExternalModelId(
-          useChatRuntimeStore.getState().params.checkpoint,
-        ),
+        isExternalModelId(useChatRuntimeStore.getState().params.checkpoint),
     });
   }, [aui, chatActive]);
 
