@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 // Copyright 2026-present the Unsloth AI Inc. team. All rights reserved. See /studio/LICENSE.AGPL-3.0
 
-import { markdownToSpeechText } from "@/features/chat/utils/speech-text";
-import { splitIntoSentences } from "@/features/chat/voice/speech-text";
+import { markdownToSpeechText } from "../chat/utils/speech-text.ts";
+import { splitIntoSentences } from "../chat/voice/speech-text.ts";
 
 /** Pull only the visible assistant text; reasoning and tool-call parts are not spoken. */
 export function extractAssistantSpeechText(content: unknown): string {
