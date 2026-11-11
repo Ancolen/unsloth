@@ -15,7 +15,12 @@ from urllib.parse import urlsplit
 
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 
-from auth.authentication import get_current_subject, subject_for_header_or_query_token
+from auth.authentication import (
+    authenticated_via_api_key,
+    bearer_names_a_session,
+    get_current_subject,
+    subject_for_header_or_query_token,
+)
 from core.live.assets import AssetError, asset_by_role, download_asset
 from core.live.models import live_enabled, status
 from core.live.session import LiveSession
@@ -54,11 +59,21 @@ def _bearer_token(websocket: WebSocket) -> Optional[str]:
     return None
 
 
+def _require_ui_session(via_api_key: bool) -> None:
+    if via_api_key:
+        raise HTTPException(
+            status_code = 403,
+            detail = "Live voice is available only in the Studio UI.",
+        )
+
+
 @router.get("/status")
 async def live_status(
     current_subject: str = Depends(get_current_subject),
+    via_api_key: bool = Depends(authenticated_via_api_key),
 ) -> dict:
     """Capabilities and the feature flag; safe to poll before opening a session."""
+    _require_ui_session(via_api_key)
     return status().to_dict()
 
 
@@ -66,8 +81,10 @@ async def live_status(
 async def live_asset_download(
     role: str,
     current_subject: str = Depends(get_current_subject),
+    via_api_key: bool = Depends(authenticated_via_api_key),
 ) -> dict:
     """Download one pinned VAD/endpoint asset and verify its SHA-256."""
+    _require_ui_session(via_api_key)
     if not live_enabled():
         raise HTTPException(status_code = 403, detail = "Live voice is disabled.")
     asset = asset_by_role(role)
@@ -91,7 +108,9 @@ async def live_websocket(websocket: WebSocket) -> None:
         return
 
     token = _bearer_token(websocket)
-    if not token:
+    if not token or not bearer_names_a_session(token):
+        # Live audio is a local UI feature; API keys and keyless callers are not
+        # the browser session that owns the microphone and speaker.
         await websocket.close(code = 4401)
         return
     try:
