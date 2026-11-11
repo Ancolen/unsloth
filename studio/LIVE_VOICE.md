@@ -728,8 +728,9 @@ Automated, implemented today:
   Silero session reuse, endpoint policy and clamping, full turn (transcript,
   TTS, metrics), barge-in, stop-during-STT/stop-during-TTS races, pinned asset
   download/hash failure, Piper/XTTS adapters and detector status.
-- Frontend `tests/live-sentence-stream.test.ts` (3 tests): visible-text
-  extraction, trailing-sentence withholding and prefix-change restart.
+- Frontend `tests/live-sentence-stream.test.ts` (4 tests): visible-text
+  extraction, trailing-sentence withholding, prefix-change restart and fenced
+  code-block skipping.
 
 Planned but not written yet: controller transition tests with mocked
 socket/player, attachment/composer-send mocks, component tests for the button,

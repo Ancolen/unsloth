@@ -4,6 +4,36 @@
 import { markdownToSpeechText } from "../chat/utils/speech-text.ts";
 import { splitIntoSentences } from "../chat/voice/speech-text.ts";
 
+/**
+ * Drop fenced code blocks before the shared markdown-to-speech conversion.
+ * Read-aloud intentionally speaks code, but a voice conversation should not read
+ * a whole `print(...)` dump; an unclosed fence is dropped to the end, which is
+ * also the right behavior while the reply is still streaming.
+ */
+function stripFencedCode(markdown: string): string {
+  const kept: string[] = [];
+  let fence: string | null = null;
+  for (const line of markdown.split("\n")) {
+    const opening = /^\s*(`{3,}|~{3,})/.exec(line);
+    if (fence !== null) {
+      if (
+        opening &&
+        opening[1][0] === fence[0] &&
+        opening[1].length >= fence.length
+      ) {
+        fence = null;
+      }
+      continue;
+    }
+    if (opening) {
+      fence = opening[1];
+      continue;
+    }
+    kept.push(line);
+  }
+  return kept.join("\n");
+}
+
 /** Pull only the visible assistant text; reasoning and tool-call parts are not spoken. */
 export function extractAssistantSpeechText(content: unknown): string {
   if (typeof content === "string") {
@@ -40,7 +70,7 @@ export class LiveSentenceStream {
   }
 
   update(text: string, final: boolean): string[] {
-    const clean = markdownToSpeechText(text).trim();
+    const clean = markdownToSpeechText(stripFencedCode(text)).trim();
     if (!clean) {
       return [];
     }

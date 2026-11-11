@@ -33,3 +33,12 @@ test("LiveSentenceStream restarts when the spoken prefix changes", () => {
   assert.deepEqual(stream.update("Birinci. İkinci.", false), ["Birinci."]);
   assert.deepEqual(stream.update("Yeni. Cevap.", true), ["Yeni.", "Cevap."]);
 });
+
+test("LiveSentenceStream never speaks a fenced code block", () => {
+  const stream = new LiveSentenceStream();
+  const spoken = stream.update(
+    "Merhaba.\n```python\nprint('secret')\n```\nDünya.",
+    true,
+  );
+  assert.deepEqual(spoken, ["Merhaba.", "Dünya."]);
+});
