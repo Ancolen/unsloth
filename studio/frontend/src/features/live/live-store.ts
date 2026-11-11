@@ -13,6 +13,7 @@ interface LiveSettings {
   voice: string;
   attachScreen: boolean;
   allowCloudScreen: boolean;
+  autoDownloadAssets: boolean;
   interruptWhileThinking: boolean;
   endpointFastMs: number;
   endpointExtendedMs: number;
@@ -62,6 +63,7 @@ export interface LiveStore extends LiveRuntime, LiveSettings {
   setVoice: (voice: string) => void;
   setAttachScreen: (attach: boolean) => void;
   setAllowCloudScreen: (allow: boolean) => void;
+  setAutoDownloadAssets: (auto: boolean) => void;
   setInterruptWhileThinking: (interrupt: boolean) => void;
   setEndpointFastMs: (ms: number) => void;
   setEndpointExtendedMs: (ms: number) => void;
@@ -96,6 +98,7 @@ const initialSettings: LiveSettings = {
   voice: "",
   attachScreen: false,
   allowCloudScreen: false,
+  autoDownloadAssets: true,
   interruptWhileThinking: false,
   endpointFastMs: 300,
   endpointExtendedMs: 900,
@@ -134,6 +137,7 @@ export const useLiveStore = create<LiveStore>()(
       setVoice: (voice) => set({ voice }),
       setAttachScreen: (attachScreen) => set({ attachScreen }),
       setAllowCloudScreen: (allowCloudScreen) => set({ allowCloudScreen }),
+      setAutoDownloadAssets: (autoDownloadAssets) => set({ autoDownloadAssets }),
       setInterruptWhileThinking: (interruptWhileThinking) =>
         set({ interruptWhileThinking }),
       setEndpointFastMs: (endpointFastMs) => set({ endpointFastMs }),
@@ -158,6 +162,7 @@ export const useLiveStore = create<LiveStore>()(
         voice: state.voice,
         attachScreen: state.attachScreen,
         allowCloudScreen: state.allowCloudScreen,
+        autoDownloadAssets: state.autoDownloadAssets,
         interruptWhileThinking: state.interruptWhileThinking,
         endpointFastMs: state.endpointFastMs,
         endpointExtendedMs: state.endpointExtendedMs,

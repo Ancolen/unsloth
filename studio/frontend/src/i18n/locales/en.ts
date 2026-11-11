@@ -5814,6 +5814,8 @@ export const en = {
       assetNotInstalled: "Not installed",
       assetRuntimeMissing: "Installed, ONNX runtime missing",
       assetDownloadFailed: "The detector model could not be downloaded.",
+      autoDownloadAssets:
+        "Download missing detector models automatically when Live starts",
       onnxRuntimeMissing:
         "onnxruntime is not installed in Studio's Python environment, so the detector models stay inactive; Live uses the energy VAD and silence timeout.",
       checking: "Checking…",

@@ -6168,6 +6168,8 @@ export const tr = {
       assetNotInstalled: "Kurulu değil",
       assetRuntimeMissing: "Kurulu, ONNX çalışma zamanı yok",
       assetDownloadFailed: "Algılama modeli indirilemedi.",
+      autoDownloadAssets:
+        "Canlı ses başlarken eksik algılama modellerini otomatik indir",
       onnxRuntimeMissing:
         "Studio'nun Python ortamında onnxruntime kurulu değil; algılama modelleri etkinleşmez ve Canlı ses enerji VAD'ı ile sessizlik zaman aşımını kullanır.",
       checking: "Kontrol ediliyor…",

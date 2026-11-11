@@ -14,7 +14,12 @@
 import { useVoiceSettingsStore } from "@/features/settings/stores/voice-settings-store";
 import { LiveAudioCapture } from "./live-audio-capture";
 import { LiveAudioPlayer } from "./live-audio-player";
-import { LiveSocket, fetchLiveStatus, getLiveToken } from "./live-client";
+import {
+  LiveSocket,
+  downloadLiveAsset,
+  fetchLiveStatus,
+  getLiveToken,
+} from "./live-client";
 import {
   LiveScreenUnsupportedError,
   frameToDataUrl,
@@ -133,6 +138,11 @@ class LiveController {
       if (!token) {
         throw new Error("Sign in again before starting live voice.");
       }
+      if (this.startCancelled(startToken)) {
+        this.starting = false;
+        return;
+      }
+      await this.prepareDetectorAssets(status, startToken);
       if (this.startCancelled(startToken)) {
         this.starting = false;
         return;
@@ -274,6 +284,40 @@ class LiveController {
 
   private startCancelled(token: number): boolean {
     return token !== this.startToken || !useLiveStore.getState().active;
+  }
+
+  /**
+   * First-run convenience: fetch the small pinned detectors before the socket
+   * opens, so the very first session can use them.  A failure is not fatal;
+   * the backend keeps the energy/silence fallback and the settings block shows
+   * the missing state.
+   */
+  private async prepareDetectorAssets(
+    status: LiveStatus,
+    startToken: number,
+  ): Promise<void> {
+    const settings = useLiveStore.getState();
+    if (
+      !settings.autoDownloadAssets ||
+      status.capabilities.onnxruntime !== "available"
+    ) {
+      return;
+    }
+    const missing = (status.assets ?? []).filter((asset) => !asset.installed);
+    if (missing.length === 0) {
+      return;
+    }
+    const results = await Promise.allSettled(
+      missing.map((asset) => downloadLiveAsset(asset.role)),
+    );
+    for (const result of results) {
+      if (result.status === "rejected") {
+        console.warn("Live detector download failed", result.reason);
+      }
+    }
+    if (!this.startCancelled(startToken)) {
+      await this.ensureStatus(true);
+    }
   }
 
   stop(): void {

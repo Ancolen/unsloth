@@ -32,9 +32,14 @@ export async function fetchLiveStatus(): Promise<LiveStatus | null> {
 export async function downloadLiveAsset(
   role: string,
 ): Promise<LiveAssetStatus> {
+  const timeout = (
+    AbortSignal as unknown as {
+      timeout?: (ms: number) => AbortSignal;
+    }
+  ).timeout?.(30_000);
   const response = await authFetch(
     `/api/live/assets/${encodeURIComponent(role)}/download`,
-    { method: "POST" },
+    { method: "POST", signal: timeout },
   );
   const payload = (await response.json().catch(() => null)) as
     | (LiveAssetStatus & { detail?: unknown })

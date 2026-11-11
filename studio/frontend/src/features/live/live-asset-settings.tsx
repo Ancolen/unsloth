@@ -16,6 +16,7 @@ import type { LiveAssetStatus } from "./live-types";
 export const LiveAssetSettings = () => {
   const t = useT();
   const status = useLiveStore((state) => state.status);
+  const autoDownload = useLiveStore((state) => state.autoDownloadAssets);
   const [downloading, setDownloading] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const onnxMissing = status?.capabilities.onnxruntime === "missing";
@@ -87,6 +88,18 @@ export const LiveAssetSettings = () => {
           )}
         </div>
       ))}
+      <label className="flex items-center justify-between gap-3 text-xs">
+        <span>{t("live.settings.autoDownloadAssets")}</span>
+        <input
+          type="checkbox"
+          checked={autoDownload}
+          onChange={(event) =>
+            useLiveStore
+              .getState()
+              .setAutoDownloadAssets(event.target.checked)
+          }
+        />
+      </label>
       {onnxMissing ? (
         <p className="text-xs text-amber-600 dark:text-amber-400">
           {t("live.settings.onnxRuntimeMissing")}

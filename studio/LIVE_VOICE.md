@@ -29,9 +29,8 @@ Feature flag: `UNSLOTH_STUDIO_LIVE_VOICE` (default on; set `0` to disable)
 - Screen consent: with an external chat provider selected, a screen frame is
   attached only after the explicit cloud-screen checkbox is enabled; otherwise
   the turn is sent without the image and the live bar explains why.
-- Pending: automatic detector download on first run (the manual install is
-  implemented), a model-picker UI for the local engines (they are env-selected
-  today), partial transcripts, and Phase 5 hardening.
+- Pending: download progress/cancel UI, a model-picker UI for the local engines
+  (they are env-selected today), partial transcripts, and Phase 5 hardening.
 
 ## 1. Goal
 
@@ -614,9 +613,14 @@ a Download button; a user-selected `UNSLOTH_LIVE_VAD_MODEL` /
   becomes active automatically (status turns from `energy` to `silero` and from
   `silence` to `smart_turn`); without it the fallbacks stay in place and the UI
   shows the missing-runtime message.
-- Still open: automatic first-run download, download progress/cancel, and a
-  "Live ready" test page for mic/speaker/screen.  XTTS keeps its own
-  `huggingface_hub` download because its CPML acceptance is part of the path.
+- Automatic first run: with the Settings toggle on (default) and
+  `onnxruntime` available, Live downloads any missing detector before opening
+  the socket, so the first session can use it.  A failure is non-fatal and the
+  fallback stays active.  The download endpoint is also exposed for the manual
+  button.
+- Still open: download progress/cancel and a "Live ready" test page for
+  mic/speaker/screen.  XTTS keeps its own `huggingface_hub` download because its
+  CPML acceptance is part of the path.
 
 ## 9. Implementation phases
 
