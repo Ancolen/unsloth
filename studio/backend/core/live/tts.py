@@ -342,8 +342,8 @@ def build_tts(
     """Select the adapter from the environment.
 
     `UNSLOTH_LIVE_TTS=fake` returns a test tone, `piper` uses the local Piper
-    voice from `UNSLOTH_LIVE_PIPER_MODEL`, and the default uses Studio's real
-    speech engine.
+    voice from `UNSLOTH_LIVE_PIPER_MODEL`, `xtts` uses the opt-in XTTS-v2
+    adapter, and the default uses Studio's real speech engine.
     """
     engine = os.environ.get("UNSLOTH_LIVE_TTS", "").strip().lower()
     if engine == "fake":
@@ -357,6 +357,10 @@ def build_tts(
             use_cuda = os.environ.get("UNSLOTH_LIVE_PIPER_CUDA", "").strip().lower()
             in ("1", "true", "yes", "on"),
         )
+    if engine == "xtts":
+        from core.live.xtts import build_xtts_tts
+
+        return build_xtts_tts()
     return AsgiTts(
         app,
         token,

@@ -504,7 +504,7 @@ Dependencies and packaging:
 | STT | Whisper large-v3-turbo | whisper.cpp | ~1.1 GB GPU / CPU | MIT |
 | STT alternative | Qwen3-ASR 0.6B | audio.cpp | small | model card |
 | TTS default | Piper `tr_TR-fettah-medium` | Piper ONNX adapter (implemented, opt-in) | CPU, ~0 GB | Piper MIT; voice license check |
-| TTS quality | XTTS-v2 | coqui/transformers adapter | ~1.8 GB GPU | CPML non-commercial; acceptance gate |
+| TTS quality | XTTS-v2 | coqui/transformers adapter (implemented, opt-in) | ~1.8 GB GPU | CPML non-commercial; acceptance gate |
 | TTS alternative | Studio audio.cpp models | audio.cpp | varies | test Turkish quality |
 | VAD | Silero VAD v6.2.3 | onnxruntime | ~2 MB CPU | MIT |
 | Endpoint | Smart Turn v3.2 | onnxruntime | small CPU | license metadata |
@@ -522,6 +522,12 @@ Environment overrides (all optional):
 | `UNSLOTH_LIVE_PIPER_CONFIG` | Optional path to the voice's `.onnx.json`; defaults beside the model |
 | `UNSLOTH_LIVE_PIPER_SPEAKER` | Optional speaker name/id for a multi-speaker voice |
 | `UNSLOTH_LIVE_PIPER_CUDA=1` | Load the Piper voice with CUDA instead of CPU |
+| `UNSLOTH_LIVE_TTS=xtts` | Use the opt-in XTTS-v2 neural voice |
+| `UNSLOTH_LIVE_XTTS_MODEL_DIR` | Local XTTS checkpoint directory (defaults under `~/.unsloth/studio/live-models/xtts-v2`) |
+| `UNSLOTH_LIVE_XTTS_SPEAKER` | Built-in XTTS speaker (default `Asya Anara`) or a reference WAV path |
+| `UNSLOTH_LIVE_XTTS_LANGUAGE` | XTTS language code (default `tr`) |
+| `UNSLOTH_LIVE_XTTS_DEVICE` | `auto`, `cpu`, `cuda` or `gpu:N` |
+| `UNSLOTH_LIVE_XTTS_ACCEPT_LICENSE=1` | Explicitly accept the CPML non-commercial license |
 | `UNSLOTH_LIVE_VAD_MODEL` | Silero VAD ONNX path; falls back to the energy VAD |
 | `UNSLOTH_LIVE_SMART_TURN_MODEL` | Smart Turn ONNX path; falls back to 900 ms extended endpointing |
 
@@ -529,9 +535,18 @@ The Piper path is installed on demand, not bundled: install `piper-tts` in
 Studio's managed Python environment, then point `UNSLOTH_LIVE_PIPER_MODEL` at a
 voice pair such as `tr_TR-fettah-medium.onnx` (+ `.onnx.json`) from
 `rhasspy/piper-voices` (`tr/tr_TR/fettah/medium/`).  The adapter returns an
-actionable error when the package, voice or config is missing.  Silero VAD and
-Smart Turn remain optional `onnxruntime` assets; the energy VAD needs no extra
-dependency and is the default until those assets are present.
+actionable error when the package, voice or config is missing.
+
+The XTTS path is also opt-in: install `coqui-tts` (PyTorch), accept CPML with
+`UNSLOTH_LIVE_XTTS_ACCEPT_LICENSE=1`, and the adapter downloads the pinned
+`coqui/XTTS-v2@6c2b0d7` checkpoint (~1.8 GB) on first synthesis.  A reference
+WAV path enables voice cloning; an unknown Studio voice id falls back to the
+configured XTTS speaker instead of breaking the session.  Both local engines
+return one complete WAV per sentence, so the WebSocket protocol and the
+frontend player do not change.
+
+Silero VAD and Smart Turn remain optional `onnxruntime` assets; the energy VAD
+needs no extra dependency and is the default until those assets are present.
 
 Download flow:
 

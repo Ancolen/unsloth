@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+from types import SimpleNamespace
 from typing import Any
 
 from core.live import audio
@@ -20,6 +21,7 @@ from core.live.session import LiveSession
 from core.live.stt import FakeStt
 from core.live.tts import PiperTts, TtsError, ToneTts
 from core.live.vad import EnergyVad
+from core.live.xtts import XttsTts
 
 
 def _frame_for(ms: int, speech: bool) -> bytes:
@@ -222,3 +224,51 @@ def test_piper_tts_reports_a_missing_voice() -> None:
         assert "Piper voice not found" in str(exc)
     else:
         raise AssertionError("expected TtsError for a missing Piper voice")
+
+
+class _FakeXttsModel:
+    class config:
+        class audio:
+            output_sample_rate = 24000
+
+    speaker_manager = SimpleNamespace(
+        speakers = {
+            "Asya Anara": {
+                "gpt_cond_latent": [[0.0]],
+                "speaker_embedding": [[0.0]],
+            }
+        }
+    )
+
+    def inference_stream(self, text: str, language: str, gpt: Any, spk: Any, **_: Any):
+        yield [0.0, 0.25, -0.25, 1.0]
+
+
+def test_xtts_requires_the_cpml_acceptance_flag() -> None:
+    async def scenario() -> None:
+        engine = XttsTts(model_instance = _FakeXttsModel())
+        await engine.synthesize("merhaba")
+
+    try:
+        asyncio.run(scenario())
+    except TtsError as exc:
+        assert "CPML" in str(exc)
+    else:
+        raise AssertionError("expected the XTTS license gate")
+
+
+def test_xtts_wraps_streamed_pcm() -> None:
+    async def scenario() -> tuple[bytes, int]:
+        engine = XttsTts(
+            model_instance = _FakeXttsModel(),
+            accept_license = True,
+        )
+        try:
+            return await engine.synthesize("merhaba", voice = "Asya Anara")
+        finally:
+            await engine.close()
+
+    wav_bytes, sample_rate = asyncio.run(scenario())
+    assert sample_rate == 24000
+    assert wav_bytes.startswith(b"RIFF")
+    assert audio.wav_sample_rate(wav_bytes) == 24000
