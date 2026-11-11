@@ -288,12 +288,12 @@ PCM 16 kHz frames
   fast+100 ms, max utterance 1-120 s) so a bad value cannot wedge a session.
 - VAD fallback: if the ONNX model cannot load, use an energy VAD and surface a
   visible warning; never fail silently.
-- Barge-in: when `mode=barge_in` and playback is active, VAD continues. Sustained
-  speech for 120 ms above the threshold emits `barge_in`. In `turn` mode, frames
-  during playback are discarded.
+- Barge-in: when `mode=barge_in` and playback is active, VAD continues. Once the
+  VAD opens an utterance, the session emits `barge_in` and cancels TTS. In `turn`
+  mode, frames during playback are discarded.
 - Echo policy: the frontend reports `track.getSettings().echoCancellation` in
-  `hello`. If false, the UI defaults to turn mode or warns that headphones are
-  recommended. The backend raises barge-in thresholds when playback is active.
+  `hello`. If false, the UI warns that headphones are recommended; barge-in
+  quality then depends on the microphone and speakers, not on a second threshold.
 - Bounded queues: if the client outruns the server, drop the oldest audio frames
   and reset the utterance buffer rather than growing without bound.
 
@@ -303,10 +303,13 @@ PCM 16 kHz frames
   - whisper.cpp `large-v3-turbo` (default, Turkish),
   - audio.cpp Qwen3-ASR 0.6B / Parakeet (alternatives),
   - Transformers ASR for custom repos.
-- `LiveStt` calls the engine functions underneath the existing
-  `/api/inference/audio/transcriptions` route directly; no loopback HTTP.
-- Warm the model at session start, in a worker thread; the event loop must not block.
-- Language defaults to `tr`; `auto` is available.
+- `AsgiStt` calls Studio's own `/v1/audio/transcriptions` over an in-process
+  ASGI transport (no loopback socket) with the user's JWT, so model discovery,
+  loading and the sidecar lifecycle stay in Studio.
+- Models load through Studio's existing manager on first use; Live does not run
+  its own warmup. The live STT/TTS requests carry `X-Unsloth-Live-Voice: 1` so
+  they stay out of the audio gallery and API monitor.
+- Language defaults to `tr`; `auto` is available and omits a forced language.
 - Partial transcripts are not part of v1. The UI shows listening/transcribing states.
 
 ### 5.5 TTS
@@ -341,13 +344,17 @@ tool-call JSON and reasoning are never spoken. v1 uses WAV; Opus can follow.
 
 ### 5.6 Model readiness and VRAM
 
-`LiveModelManager`:
+Readiness comes from `core/live/models.py` and `core/live/assets.py`:
 
-- reports STT/TTS/VAD/endpoint readiness in `ready` or `needs_setup`,
-- returns download actions for missing models,
-- warms STT/TTS in parallel at session start and emits progress,
-- optionally unloads idle models after N minutes,
-- integrates with Studio's existing model/VRAM status surfaces.
+- `/api/live/status` reports the STT/TTS engine kinds, the active VAD/endpoint,
+  `onnxruntime` availability and per-asset installed/active flags.
+- VAD/endpoint files have download actions in Settings and are fetched before the
+  first session when `onnxruntime` is present; STT/TTS/chat models stay on
+  Studio's existing model pages, so there is no duplicate download manager.
+- Local Piper/XTTS engines are created per session and closed on stop; there is
+  no separate idle-unload timer yet.
+- The VRAM table below is guidance for the recommended models, not a reservation
+  made by the live engine.
 
 Recommended 8 GB configuration:
 
@@ -381,22 +388,26 @@ studio/frontend/src/features/live/
   live-button.tsx
   live-bar.tsx
   live-controller.ts
+  live-client.ts
+  live-runtime-bridge.tsx
   live-audio-capture.ts
   live-audio-player.ts
   live-tts.ts
   live-screen.ts
   live-store.ts
   live-settings.tsx
+  live-asset-settings.tsx
+  live-endpoint-settings.tsx
   live-types.ts
-  live-i18n.ts (or keys in locales)
 ```
 
 Small anchor edits:
 
 - `components/assistant-ui/thread.tsx`:
-  - `ComposerRightControls` (`~line 7623`) gets `<LiveButton />` next to the mic,
-    inside the `ComposerPrimitive.If dictation={false}` block.
-  - the composer area gets `<LiveBar />` next to `ChatDictationBar`.
+  - `ComposerRightControls` gets `<LiveButton />` next to the mic, inside the
+    `ComposerPrimitive.If dictation={false}` block.
+  - the composer area gets `<LiveBar />` next to `ChatDictationBar`, and a failed
+    session's error card stays above the editor until dismissed or retried.
 - `components/assistant-ui/auto-read-aloud.tsx`: skip auto-read while live is active.
 - `features/settings/tabs/voice-tab.tsx`: add the Live settings section/tab.
 - `features/settings/settings-search.ts`: register new keys.

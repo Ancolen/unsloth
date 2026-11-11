@@ -303,6 +303,12 @@ export const SETTINGS_SEARCH_INDEX: Record<SettingsTab, TranslationKey[]> = {
     "settings.voice.readAloud.pitchLabel",
     "settings.voice.readAloud.volumeLabel",
     "settings.voice.readAloud.previewLabel",
+    "live.settings.title",
+    "live.settings.language",
+    "live.settings.detectorModels",
+    "live.settings.advancedEndpointing",
+    "live.settings.attachScreen",
+    "live.settings.interruptWhileThinking",
   ],
   "keyboard-shortcuts": [
     "settings.keyboardShortcuts.title",
